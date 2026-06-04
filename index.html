@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#FBF9F5">
+<title>My Plays · Beauty + AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF9F5; --paper-2:#F4F1EA; --ink:#1C1A17; --ink-soft:#6B6459;
+    --line:#E7E2D8; --card:#FFFFFF; --gold:#A8884E;
+    --go:#4F7D5E; --go-bg:#E9F1EA; --go-line:#CFE2D2;
+    --wait:#B0832B; --wait-bg:#F7EFD8; --wait-line:#EBDDB4;
+    --skip:#A8503C; --skip-bg:#F5E7E2; --skip-line:#EAD2C9;
+    --mute:#8C867B; --mute-bg:#F0EDE6;
+    --shadow:0 1px 2px rgba(28,26,23,.04),0 8px 24px -12px rgba(28,26,23,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:'Hanken Grotesk',system-ui,sans-serif;background:var(--paper);color:var(--ink);
+    line-height:1.45;letter-spacing:-.01em;min-height:100vh;
+    padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 40px);
+    background-image:radial-gradient(120% 60% at 50% -10%, #FFFDF8 0%, var(--paper) 60%);}
+  .wrap{max-width:540px;margin:0 auto;padding:0 18px}
+  header{padding:34px 0 8px}
+  .kicker{font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+  h1{font-family:'Fraunces',serif;font-weight:500;font-size:40px;line-height:1.02;letter-spacing:-.02em;margin:6px 0 0}
+  h1 em{font-style:italic;color:var(--gold)}
+  .asof{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12.5px;color:var(--ink-soft)}
+  .dot-live{width:7px;height:7px;border-radius:50%;background:var(--go);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(79,125,94,.45)}70%{box-shadow:0 0 0 7px rgba(79,125,94,0)}100%{box-shadow:0 0 0 0 rgba(79,125,94,0)}}
+  .read{margin:18px 0 6px;padding:16px 18px;background:var(--paper-2);border:1px solid var(--line);border-radius:16px;position:relative;overflow:hidden}
+  .read::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--wait)}
+  .read .lab{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--wait)}
+  .read p{font-size:14.5px;margin-top:5px}.read b{font-weight:600}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:16px 2px 4px;font-size:11.5px;color:var(--ink-soft)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .pip{width:9px;height:9px;border-radius:50%}
+  .pip.go{background:var(--go)}.pip.wait{background:var(--wait)}.pip.skip{background:var(--skip)}.pip.mute{background:var(--mute)}
+  .section-label{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);margin:26px 4px 12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden;animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .top{padding:18px 18px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .tk{display:flex;flex-direction:column}
+  .tk .sym{font-family:'Fraunces',serif;font-size:26px;font-weight:600;line-height:1}
+  .tk .co{font-size:12px;color:var(--ink-soft);margin-top:4px}
+  .px{text-align:right;white-space:nowrap}
+  .px .now{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+  .px .chg{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+  .chg.up{color:var(--go)}.chg.down{color:var(--skip)}
+  .verdict{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .verdict .pip{width:7px;height:7px}
+  .v-go{background:var(--go-bg);color:var(--go);border:1px solid var(--go-line)}
+  .v-wait{background:var(--wait-bg);color:var(--wait);border:1px solid var(--wait-line)}
+  .v-skip{background:var(--skip-bg);color:var(--skip);border:1px solid var(--skip-line)}
+  .v-mute{background:var(--mute-bg);color:var(--mute);border:1px solid var(--line)}
+  .levels{display:flex;padding:0 18px 14px;font-size:12px}
+  .levels .lv{flex:1;border-left:2px solid var(--line);padding-left:10px}
+  .levels .lv:first-child{border-left:none;padding-left:0}
+  .levels .lv .k{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+  .levels .lv .vv{font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+  .contracts{border-top:1px solid var(--line);background:linear-gradient(180deg,#FCFBF8,transparent 60%)}
+  .ct{display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line)}
+  .ct .pip{flex:none}.ct .meta{flex:1;min-width:0}
+  .ct .play{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
+  .ct .sub{font-size:11.5px;color:var(--ink-soft);margin-top:1px}
+  .ct .fit{font-size:11px;font-weight:600;padding:3px 8px;border-radius:7px;white-space:nowrap}
+  .fit.ok{background:var(--go-bg);color:var(--go)}.fit.no{background:var(--skip-bg);color:var(--skip)}.fit.na{background:var(--mute-bg);color:var(--mute)}
+
+  /* ---- price analyzer ---- */
+  .analyzer{border-top:1px solid var(--line);padding:15px 18px 17px;background:var(--paper-2)}
+  .analyzer .h{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:11px;display:flex;align-items:center;gap:7px}
+  .analyzer .h .spark{font-family:'Fraunces',serif;font-style:italic;text-transform:none;letter-spacing:0;color:var(--ink-soft);font-weight:400;font-size:12px}
+  .inrow{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:8px}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .field input,.field select{font-family:inherit;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;
+    padding:9px 10px;border:1.5px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);width:100%;-webkit-appearance:none;appearance:none}
+  .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%236B6459' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(168,136,78,.13)}
+  .prem-wrap{position:relative}.prem-wrap::before{content:"$";position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink-soft);font-weight:600;font-size:15px;pointer-events:none}
+  .prem-wrap input{padding-left:21px}
+  .result{margin-top:13px;border-radius:13px;padding:13px 14px;border:1px solid var(--line);background:#fff;display:none}
+  .result.show{display:block;animation:rise .35s ease both}
+  .result .stats{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;margin-bottom:9px}
+  .result .stats .s b{display:block;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .result .stats .s span{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+  .result .vline{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;line-height:1.45;padding-top:10px;border-top:1px solid var(--line)}
+  .result .vline .vp{flex:none;margin-top:4px}
+  .result .vline b{font-weight:600}
+  .why-btn{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;font:inherit;padding:13px 18px;border-top:1px dashed var(--line)}
+  .why-btn .q{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
+  .why-btn .qmk{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--gold);color:var(--gold);font-size:11px;font-weight:700;display:grid;place-items:center;font-family:'Fraunces',serif}
+  .chev{transition:transform .35s cubic-bezier(.2,.7,.2,1);color:var(--ink-soft)}
+  .why-btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
+  .why-body{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.2,.7,.2,1)}
+  .why-inner{padding:2px 18px 18px;font-size:13.5px;line-height:1.55}
+  .why-inner .tag{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);display:block;margin:12px 0 3px}
+  .why-inner .tag:first-child{margin-top:2px}.why-inner b{font-weight:600}
+  footer{margin-top:30px;padding:20px 6px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-soft);line-height:1.6}
+  footer b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Beauty + AI · $100 watch</div>
+    <h1>My <em>Plays</em></h1>
+    <div class="asof"><span class="dot-live"></span><span>as of Thu, Jun 4 · close prices</span></div>
+  </header>
+  <div class="read">
+    <span class="lab">This week's read</span>
+    <p><b>Quiet week — no clean buys yet.</b> Everyone just reported and faded; next catalysts are Aug–Sep. Watching <b>SOUN to hold $7.85</b> and <b>HIMS to break $30</b>. Per your rule: no setup = no trade.</p>
+  </div>
+  <div class="legend">
+    <span><i class="pip go"></i> Looks solid</span><span><i class="pip wait"></i> Wait / watch</span>
+    <span><i class="pip skip"></i> Skip for now</span><span><i class="pip mute"></i> Track only</span>
+  </div>
+  <div class="section-label">Your 5 names · tap “try a price” on any</div>
+  <div id="cards"></div>
+  <footer><b>Heads up:</b> not financial advice — a research aid for your own calls. Prices are last close (delayed) and the read refreshes each morning, not tick-by-tick. The price analyzer estimates fair value with Black–Scholes anchored to today's real premiums — it's a guide, not gospel. <b>Green only shows when a real setup fires.</b></footer>
+</div>
+
+<script>
+const DATA = [
+  { sym:"SOUN", co:"SoundHound AI", price:"$8.08", spot:8.08, chg:"−11.6% · 1mo", dir:"down", verdict:"wait", vlabel:"Wait",
+    anchor:{K:8, dte:8, prem:1.01}, anchorF:{dte:36, prem:1.44},
+    levels:[["Support","$7.85"],["Resistance","$9.72"],["In range","12%"]],
+    contracts:[{r:"wait",play:"$8 call · Jun 12",sub:"~$1.01 · weekly · ATM",fit:"ok",fitTxt:"fits $100"},
+               {r:"wait",play:"$8 call · Jul 10",sub:"~$1.44 · ~monthly · ATM",fit:"no",fitTxt:"$144"}],
+    why:[["What it's done","Record Q1 revenue (+52%) on May 7 — and still sold off (\"beat and fade\"). The $43M LivePerson buyout sparked dilution fears; lawsuits circling. Down ~12% on the month, near lows."],
+         ["The read","Slow bleed, no buyer conviction — flat momentum reads as exhaustion, not a turn. <b>Best mechanics on your list</b> (28M shares/day, tight spreads, a weekly call fits $100). The setup is what's missing, not the tradeability."],
+         ["Watch for","A clean bounce off <b>$7.85</b> with big volume — then it's your prime candidate."]] },
+  { sym:"HIMS", co:"Hims & Hers Health", price:"$27.51", spot:27.51, chg:"+4.5% · 1mo", dir:"up", verdict:"wait", vlabel:"Watch",
+    anchor:{K:26, dte:8, prem:2.04}, anchorF:{dte:36, prem:3.78},
+    levels:[["Support","$21.53"],["Resistance","$30.00"],["In range","68%"]],
+    contracts:[{r:"wait",play:"$26 call · Jun 12",sub:"~$2.04 · weekly · ATM",fit:"no",fitTxt:"$204"},
+               {r:"skip",play:"$26 call · Jul 10",sub:"~$3.78 · ~monthly · ATM",fit:"no",fitTxt:"$378"}],
+    why:[["What it's done","A recovery bounce, not a breakout. Messy Q1 (May 11): $92M loss, margins hit after FDA forced winding down compounded semaglutide. But landed a Novo Nordisk deal + raised guidance, so the street's repricing the pivot as survivable."],
+         ["The read","<b>Extended</b> — already above analyst consensus (~$27), upper half of its range, no fresh catalyst until Q2 (~Aug 10). Chasing it mid-range fights resistance."],
+         ["Watch for","A clean <b>break of $30</b>. Break = momentum lives; fade at $30 = the bounce is done. (Great liquidity, but ATM calls run >$100 — you'd go slightly OTM.)"]] },
+  { sym:"AI", co:"C3.ai", price:"$10.71", spot:10.71, chg:"+13.8% · 1mo", dir:"up", verdict:"skip", vlabel:"Skip",
+    anchor:{K:10, dte:8, prem:1.36}, anchorF:{dte:36, prem:1.66},
+    levels:[["Support","$8.32"],["Resistance","$11.82"],["In range","68%"]],
+    contracts:[{r:"skip",play:"$10 call · Jun 12",sub:"~$1.36 · weekly · ATM",fit:"no",fitTxt:"$136"},
+               {r:"skip",play:"$10 call · Jul 10",sub:"~$1.66 · ~monthly · ATM",fit:"no",fitTxt:"$166"}],
+    why:[["What it's done","A sentiment pop: founder Tom Siebel returned as CEO May 8 and bought ~$69M of stock. But preliminary Q4 (June 3) showed revenue down 35% for the year and guided down again — and the stock <b>dipped on it</b>."],
+         ["The read","A <b>dead-cat bounce in a multi-year downtrend</b> ($30+ in 2023 → $8). The post-earnings dip into the $11.82 ceiling says the squeeze is likely spent."],
+         ["Watch for","Honestly — pass. You'd be buying into resistance with the catalyst burned and nothing new until Sept 9."]] },
+  { sym:"ODD", co:"Oddity Tech · AI beauty", price:"$10.25", spot:10.25, chg:"−30.4% · 1mo", dir:"down", verdict:"skip", vlabel:"Skip",
+    anchor:{K:10, dte:8, prem:0.60}, anchorF:null,
+    levels:[["Support","$9.25"],["Resistance","$13.98"],["In range","15%"]],
+    contracts:[{r:"skip",play:"$10 call · Jun 12",sub:"~$0.60 · weekly · ATM",fit:"ok",fitTxt:"fits, but thin"},
+               {r:"mute",play:"$10 call · Jul 10",sub:"no recent trades",fit:"na",fitTxt:"illiquid"}],
+    why:[["What it's done","Cratered ~30% on a June 2 earnings blowup: EPS −$0.17 vs +$0.02 expected, revenue −26%. Cause: a spike in ad/customer-acquisition costs that halved new-customer growth. Management called full-year visibility \"challenging.\""],
+         ["The read","A <b>falling knife</b> with an unresolved business problem. Its options trade <b>thin</b> (~1M shares/day) — wide spreads, bad fills even if you're right on direction."],
+         ["Watch for","Nothing tradeable right now. Revisit around next earnings (~late Aug). Your beauty+AI darling — just not this month."]] },
+  { sym:"ELF", co:"e.l.f. Beauty", price:"$51.99", spot:51.99, chg:"−12.5% · 1mo", dir:"down", verdict:"mute", vlabel:"Track only",
+    anchor:{K:50, dte:8, prem:3.55}, anchorF:{dte:36, prem:6.63},
+    levels:[["Support","$50.00"],["Resistance","$55.00"],["In range","16%"]],
+    contracts:[{r:"mute",play:"$50 call · Jun 12",sub:"~$3.55 · weekly · ATM",fit:"no",fitTxt:"$355"},
+               {r:"mute",play:"$50 call · Jul 10",sub:"~$6.63 · ~monthly · ATM",fit:"no",fitTxt:"$663"}],
+    why:[["What it's done","Down ~13% in May, ~60% off its highs. Morgan Stanley downgrade on U.S. share losses; Q4 beat May 20 but couldn't hold because management withheld next-year guidance over tariffs. The $1B rhode/Hailey Bieber deal adds debt + integration risk."],
+         ["The read","A falling knife with a soft floor at <b>$50</b> — no confirmed base, bounces faded, no catalyst until Aug 5."],
+         ["Budget reality","A call here runs <b>$355–$660</b> — 3–6× your $100. <b>Track-only</b>: watch if $50 holds for a few days on volume, and graduate to it when the account's bigger."]] }
+];
+
+// ---- Black-Scholes (call), IV anchored to today's real ATM premium per name ----
+function erf(x){const t=1/(1+0.3275911*Math.abs(x));const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return x>=0?y:-y;}
+const ncdf=x=>0.5*(1+erf(x/Math.SQRT2));
+function bsCall(S,K,T,iv,r=0.04){if(T<=0||iv<=0)return Math.max(0,S-K);const v=iv*Math.sqrt(T);const d1=(Math.log(S/K)+(r+0.5*iv*iv)*T)/v;return S*ncdf(d1)-K*Math.exp(-r*T)*ncdf(d1-v);}
+function calibIV(S,K,Tdays,price){let lo=0.05,hi=6,T=Tdays/365;for(let i=0;i<70;i++){const m=(lo+hi)/2;(bsCall(S,K,T,m)>price)?hi=m:lo=m;}return (lo+hi)/2;}
+
+const EXPIRIES=[["Jun 12 (this Fri)",8],["Jun 18",14],["Jun 19",15],["Jul 10 (~monthly)",36]];
+const cards=document.getElementById('cards');
+
+DATA.forEach((d,i)=>{
+  d.ivNear=calibIV(d.spot,d.anchor.K,d.anchor.dte,d.anchor.prem);
+  d.ivFar=d.anchorF?calibIV(d.spot,d.anchor.K,d.anchorF.dte,d.anchorF.prem):d.ivNear;
+  const c=document.createElement('div');c.className='card';c.style.animationDelay=(i*70)+'ms';
+  c.innerHTML=`
+    <div class="top">
+      <div class="tk"><span class="sym">${d.sym}</span><span class="co">${d.co}</span></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <div class="px"><div class="now">${d.price}</div><div class="chg ${d.dir}">${d.chg}</div></div>
+        <span class="verdict v-${d.verdict}"><i class="pip ${d.verdict==='mute'?'mute':d.verdict}"></i>${d.vlabel}</span>
+      </div>
+    </div>
+    <div class="levels">${d.levels.map(l=>`<div class="lv"><div class="k">${l[0]}</div><div class="vv">${l[1]}</div></div>`).join('')}</div>
+    <div class="contracts">${d.contracts.map(ct=>`
+      <div class="ct"><i class="pip ${ct.r}"></i>
+        <div class="meta"><div class="play">${ct.play}</div><div class="sub">${ct.sub}</div></div>
+        <span class="fit ${ct.fit}">${ct.fitTxt}</span></div>`).join('')}
+    </div>
+    <div class="analyzer">
+      <div class="h">Try a price <span class="spark">— is it worth it?</span></div>
+      <div class="inrow">
+        <div class="field"><label>Strike</label><input type="number" inputmode="decimal" class="in-k" value="${d.anchor.K}" step="0.5"></div>
+        <div class="field"><label>Expiry</label><select class="in-e">${EXPIRIES.map((e,j)=>`<option value="${e[1]}"${e[1]===14?' selected':''}>${e[0]}</option>`).join('')}</select></div>
+        <div class="field"><label>Premium</label><div class="prem-wrap"><input type="number" inputmode="decimal" class="in-p" placeholder="0.80" step="0.01"></div></div>
+      </div>
+      <div class="result"></div>
+    </div>
+    <button class="why-btn" aria-expanded="false">
+      <span class="q"><span class="qmk">?</span> Why this rating</span>
+      <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="why-body"><div class="why-inner">${d.why.map(w=>`<span class="tag">${w[0]}</span>${w[1]}`).join('')}</div></div>`;
+  cards.appendChild(c);
+
+  // analyzer wiring
+  const kEl=c.querySelector('.in-k'), eEl=c.querySelector('.in-e'), pEl=c.querySelector('.in-p'), res=c.querySelector('.result');
+  function analyze(){
+    const K=parseFloat(kEl.value), dte=parseFloat(eEl.value), P=parseFloat(pEl.value);
+    if(!(K>0)||!(P>0)){res.classList.remove('show');return;}
+    const be=K+P, movePct=(be-d.spot)/d.spot*100, risk=P*100;
+    const iv = dte<=20 ? d.ivNear : d.ivFar;
+    const fair=bsCall(d.spot,K,dte/365,iv);
+    const ratio=P/fair;
+    let priceWord, priceClass;
+    if(ratio<0.92){priceWord="cheap vs fair value";priceClass="go";}
+    else if(ratio<=1.15){priceWord="a fair price";priceClass="wait";}
+    else{priceWord="rich — you'd be overpaying";priceClass="skip";}
+    // blended verdict
+    let vp, vt;
+    if(d.verdict==='skip'||d.verdict==='mute'){
+      vp= d.verdict==='mute' ? 'mute':'skip';
+      vt=`Price is <b>${priceWord}</b> — but the <b>setup's a ${d.vlabel.toLowerCase()}</b> this week, so the price doesn't rescue it. ${d.sym==='ELF'?'Track it.':'Wait for a real setup first.'}`;
+    } else if(ratio>1.15){
+      vp='skip'; vt=`At $${P.toFixed(2)} you're <b>overpaying</b> (fair ≈ $${fair.toFixed(2)}). Even with the setup watchable, don't chase a rich premium.`;
+    } else if(movePct>12){
+      vp='wait'; vt=`Needs <b>+${movePct.toFixed(1)}%</b> just to break even by expiry — a big ask for the timeframe. Price is ${priceWord}, but that's a long reach. Tighten the strike or wait.`;
+    } else {
+      vp=priceClass==='go'?'go':'wait';
+      vt=`<b>${priceClass==='go'?'Looks solid':'Reasonable'}:</b> ${priceWord} (fair ≈ $${fair.toFixed(2)}), needs +${movePct.toFixed(1)}% to break even, risk $${risk.toFixed(0)}. ${d.verdict==='wait'?`Just confirm the trigger first — <b>${d.sym==='SOUN'?'$7.85 holding':d.sym==='HIMS'?'a break of $30':'the setup'}</b>.`:''}`;
+    }
+    res.innerHTML=`
+      <div class="stats">
+        <div class="s"><b>$${be.toFixed(2)}</b><span>Breakeven</span></div>
+        <div class="s"><b>+${movePct.toFixed(1)}%</b><span>Move needed</span></div>
+        <div class="s"><b>$${risk.toFixed(0)}</b><span>Max risk</span></div>
+        <div class="s"><b>$${fair.toFixed(2)}</b><span>Fair ≈</span></div>
+      </div>
+      <div class="vline"><i class="pip ${vp} vp"></i><div>${vt}</div></div>`;
+    res.classList.add('show');
+  }
+  [kEl,eEl,pEl].forEach(el=>el.addEventListener('input',analyze));
+});
+
+document.querySelectorAll('.why-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{const open=btn.getAttribute('aria-expanded')==='true';const body=btn.nextElementSibling;
+    btn.setAttribute('aria-expanded',String(!open));body.style.maxHeight=open?'0':(body.firstElementChild.scrollHeight+8)+'px';});
+});
+</script>
+</body>
+</html>
