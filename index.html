@@ -109,7 +109,8 @@
   <header>
     <div class="kicker">Beauty + AI · $100 watch</div>
     <h1>My <em>Plays</em></h1>
-    <div class="asof"><span class="dot-live"></span><span>as of Thu, Jun 4 · close prices</span></div>
+    <div class="asof"><span class="dot-live"></span><span id="asof">loading…</span></div>
+    <div style="margin-top:4px"><span id="andate" style="font-size:11.5px;color:var(--ink-soft)"></span></div>
   </header>
   <div class="read">
     <span class="lab">This week's read</span>
@@ -177,6 +178,7 @@ function calibIV(S,K,Tdays,price){let lo=0.05,hi=6,T=Tdays/365;for(let i=0;i<70;
 const EXPIRIES=[["Jun 12 (this Fri)",8],["Jun 18",14],["Jun 19",15],["Jul 10 (~monthly)",36]];
 const cards=document.getElementById('cards');
 
+function build(DATA){
 DATA.forEach((d,i)=>{
   d.ivNear=calibIV(d.spot,d.anchor.K,d.anchor.dte,d.anchor.prem);
   d.ivFar=d.anchorF?calibIV(d.spot,d.anchor.K,d.anchorF.dte,d.anchorF.prem):d.ivNear;
@@ -254,6 +256,14 @@ document.querySelectorAll('.why-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{const open=btn.getAttribute('aria-expanded')==='true';const body=btn.nextElementSibling;
     btn.setAttribute('aria-expanded',String(!open));body.style.maxHeight=open?'0':(body.firstElementChild.scrollHeight+8)+'px';});
 });
+} // end build()
+
+function fmtDate(s){try{const d=new Date(s+'T12:00:00');return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}catch(e){return s;}}
+fetch('data.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(p=>{
+  document.getElementById('asof').textContent='as of '+fmtDate(p.updated)+' · close prices';
+  const ad=document.getElementById('andate'); if(ad&&p.analysis_date) ad.textContent='analysis refreshed '+fmtDate(p.analysis_date);
+  build(p.names);
+}).catch(()=>{ build(DATA); document.getElementById('asof').textContent='as of Jun 4 · close prices'; });
 </script>
 </body>
 </html>

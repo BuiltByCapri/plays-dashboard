@@ -1,0 +1,38 @@
+name: Refresh prices
+
+on:
+  schedule:
+    - cron: "30 13 * * 1-5"   # 9:30 AM ET (13:30 UTC), weekdays
+  workflow_dispatch: {}         # allow manual run
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install --quiet yfinance
+      - name: Refresh data.json
+        run: python refresh.py
+      - name: Commit if changed
+        run: |
+          git config user.name "plays-bot"
+          git config user.email "actions@github.com"
+          if ! git diff --quiet data.json; then
+            git add data.json
+            git commit -m "chore: daily price refresh ($(date -u +%Y-%m-%d))"
+            git push
+            echo "Pushed refreshed prices."
+          else
+            echo "No price changes."
+          fi
