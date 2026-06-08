@@ -1,14 +1,14 @@
 {
-  "updated": "2026-06-05",
+  "updated": "2026-06-08",
   "analysis_date": "2026-06-04",
   "names": [
     {
       "sym": "SOUN",
       "co": "SoundHound AI",
       "yf": "SOUN",
-      "price": "$7.42",
-      "spot": 7.42,
-      "chg": "−22.9% · 1mo",
+      "price": "$7.53",
+      "spot": 7.53,
+      "chg": "−15.2% · 1mo",
       "dir": "down",
       "verdict": "wait",
       "vlabel": "Wait",
@@ -24,7 +24,7 @@
       "levels": [
         [
           "Support",
-          "$7.42"
+          "$7.39"
         ],
         [
           "Resistance",
@@ -32,7 +32,7 @@
         ],
         [
           "In range",
-          "0%"
+          "7%"
         ]
       ],
       "contracts": [
@@ -70,10 +70,10 @@
       "sym": "HIMS",
       "co": "Hims & Hers Health",
       "yf": "HIMS",
-      "price": "$26.03",
-      "spot": 26.03,
-      "chg": "+1.5% · 1mo",
-      "dir": "up",
+      "price": "$27.06",
+      "spot": 27.06,
+      "chg": "−4.3% · 1mo",
+      "dir": "down",
       "verdict": "wait",
       "vlabel": "Watch",
       "anchor": {
@@ -96,7 +96,7 @@
         ],
         [
           "In range",
-          "55%"
+          "70%"
         ]
       ],
       "contracts": [
@@ -134,9 +134,9 @@
       "sym": "AI",
       "co": "C3.ai",
       "yf": "AI",
-      "price": "$10.11",
-      "spot": 10.11,
-      "chg": "+5.5% · 1mo",
+      "price": "$10.65",
+      "spot": 10.65,
+      "chg": "+7.9% · 1mo",
       "dir": "up",
       "verdict": "skip",
       "vlabel": "Skip",
@@ -160,7 +160,7 @@
         ],
         [
           "In range",
-          "47%"
+          "65%"
         ]
       ],
       "contracts": [
@@ -198,9 +198,9 @@
       "sym": "ODD",
       "co": "Oddity Tech · AI beauty",
       "yf": "ODD",
-      "price": "$9.86",
-      "spot": 9.86,
-      "chg": "−33.8% · 1mo",
+      "price": "$10.28",
+      "spot": 10.28,
+      "chg": "−30.5% · 1mo",
       "dir": "down",
       "verdict": "skip",
       "vlabel": "Skip",
@@ -213,15 +213,15 @@
       "levels": [
         [
           "Support",
-          "$9.84"
+          "$9.81"
         ],
         [
           "Resistance",
-          "$14.79"
+          "$14.10"
         ],
         [
           "In range",
-          "0%"
+          "11%"
         ]
       ],
       "contracts": [
@@ -259,9 +259,9 @@
       "sym": "ELF",
       "co": "e.l.f. Beauty",
       "yf": "ELF",
-      "price": "$49.44",
-      "spot": 49.44,
-      "chg": "−20.0% · 1mo",
+      "price": "$53.00",
+      "spot": 53.0,
+      "chg": "−12.9% · 1mo",
       "dir": "down",
       "verdict": "mute",
       "vlabel": "Track only",
@@ -277,15 +277,15 @@
       "levels": [
         [
           "Support",
-          "$49.44"
+          "$49.57"
         ],
         [
           "Resistance",
-          "$60.86"
+          "$57.40"
         ],
         [
           "In range",
-          "0%"
+          "44%"
         ]
       ],
       "contracts": [
