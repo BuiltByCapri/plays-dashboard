@@ -1,14 +1,14 @@
 {
-  "updated": "2026-06-24",
+  "updated": "2026-06-25",
   "analysis_date": "2026-06-09",
   "names": [
     {
       "sym": "SOUN",
       "co": "SoundHound AI",
       "yf": "SOUN",
-      "price": "$6.40",
-      "spot": 6.4,
-      "chg": "−21.3% · 1mo",
+      "price": "$6.22",
+      "spot": 6.22,
+      "chg": "−23.0% · 1mo",
       "dir": "down",
       "anchor": {
         "K": 8,
@@ -22,7 +22,7 @@
       "levels": [
         [
           "Support",
-          "$6.40"
+          "$6.22"
         ],
         [
           "Resistance",
@@ -61,16 +61,16 @@
           ]
         ]
       },
-      "ivNear": 0.699,
-      "ivFar": 0.645
+      "ivNear": 0.641,
+      "ivFar": 0.664
     },
     {
       "sym": "HIMS",
       "co": "Hims & Hers Health",
       "yf": "HIMS",
-      "price": "$33.33",
-      "spot": 33.33,
-      "chg": "+39.7% · 1mo",
+      "price": "$31.06",
+      "spot": 31.06,
+      "chg": "+23.2% · 1mo",
       "dir": "up",
       "anchor": {
         "K": 26,
@@ -84,7 +84,7 @@
       "levels": [
         [
           "Support",
-          "$25.20"
+          "$25.38"
         ],
         [
           "Resistance",
@@ -92,7 +92,7 @@
         ],
         [
           "In range",
-          "79%"
+          "56%"
         ]
       ],
       "call": {
@@ -123,16 +123,16 @@
           ]
         ]
       },
-      "ivNear": 0.846,
-      "ivFar": 0.945
+      "ivNear": 0.84,
+      "ivFar": 0.939
     },
     {
       "sym": "AI",
       "co": "C3.ai",
       "yf": "AI",
-      "price": "$9.53",
-      "spot": 9.53,
-      "chg": "−0.6% · 1mo",
+      "price": "$8.85",
+      "spot": 8.85,
+      "chg": "−7.7% · 1mo",
       "dir": "down",
       "anchor": {
         "K": 10,
@@ -146,7 +146,7 @@
       "levels": [
         [
           "Support",
-          "$9.53"
+          "$8.85"
         ],
         [
           "Resistance",
@@ -185,16 +185,16 @@
           ]
         ]
       },
-      "ivNear": 0.717,
-      "ivFar": 0.676
+      "ivNear": 0.613,
+      "ivFar": 0.646
     },
     {
       "sym": "ODD",
       "co": "Oddity Tech · AI beauty",
       "yf": "ODD",
-      "price": "$12.70",
-      "spot": 12.7,
-      "chg": "+5.0% · 1mo",
+      "price": "$13.32",
+      "spot": 13.32,
+      "chg": "+8.6% · 1mo",
       "dir": "up",
       "anchor": {
         "K": 10,
@@ -213,7 +213,7 @@
         ],
         [
           "In range",
-          "69%"
+          "84%"
         ]
       ],
       "call": {
@@ -244,16 +244,16 @@
           ]
         ]
       },
-      "ivNear": 0.723,
-      "ivFar": 0.818
+      "ivNear": 0.77,
+      "ivFar": 0.805
     },
     {
       "sym": "ELF",
       "co": "e.l.f. Beauty",
       "yf": "ELF",
-      "price": "$65.94",
-      "spot": 65.94,
-      "chg": "+21.8% · 1mo",
+      "price": "$65.68",
+      "spot": 65.68,
+      "chg": "+14.5% · 1mo",
       "dir": "up",
       "anchor": {
         "K": 50,
@@ -275,7 +275,7 @@
         ],
         [
           "In range",
-          "94%"
+          "93%"
         ]
       ],
       "call": {
@@ -306,8 +306,8 @@
           ]
         ]
       },
-      "ivNear": 0.516,
-      "ivFar": 0.516
+      "ivNear": 0.619,
+      "ivFar": 0.623
     }
   ]
 }
