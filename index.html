@@ -107,7 +107,16 @@
   .why-inner .tag:first-child{margin-top:2px}.why-inner b{font-weight:600}
   footer{margin-top:30px;padding:20px 6px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-soft);line-height:1.6}
   footer b{color:var(--ink)}
+  .chart-btn{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;font:inherit;padding:13px 18px;border-top:1px dashed var(--line)}
+  .chart-btn .q{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
+  .chart-btn .ic{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--go);color:var(--go);font-size:11px;font-weight:700;display:grid;place-items:center}
+  .chart-btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
+  .chart-body{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.2,.7,.2,1)}
+  .chart-body.open{max-height:420px}
+  .chart-inner{padding:2px 12px 16px}
+  .tv{height:340px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
 </style>
+<script src="https://s3.tradingview.com/tv.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -160,6 +169,7 @@ const READS={
 };
 
 let DIR='call', NAMES=[];
+const TV={SOUN:'NASDAQ:SOUN',HIMS:'NYSE:HIMS',AI:'NYSE:AI',ODD:'NASDAQ:ODD',ELF:'NYSE:ELF'};
 const cards=document.getElementById('cards');
 const fmtD=s=>{try{return new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}catch(e){return s;}};
 
@@ -207,7 +217,12 @@ function build(){
         <span class="q"><span class="qmk">?</span> Why this ${DIR} rating</span>
         <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <div class="why-body"><div class="why-inner">${dd.why.map(w=>`<span class="tag">${w[0]}</span>${w[1]}`).join('')}</div></div>`;
+      <div class="why-body"><div class="why-inner">${dd.why.map(w=>`<span class="tag">${w[0]}</span>${w[1]}`).join('')}</div></div>
+      <button class="chart-btn" aria-expanded="false" data-sym="${d.sym}">
+        <span class="q"><span class="ic">↗</span> Live chart</span>
+        <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="chart-body"><div class="chart-inner"><div class="tv" id="tv-${d.sym}"></div></div></div>`;
     cards.appendChild(c);
 
     const kEl=c.querySelector('.in-k'),eEl=c.querySelector('.in-e'),pEl=c.querySelector('.in-p'),res=c.querySelector('.result');
@@ -241,6 +256,22 @@ function build(){
   document.querySelectorAll('.why-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{const open=btn.getAttribute('aria-expanded')==='true';const body=btn.nextElementSibling;
       btn.setAttribute('aria-expanded',String(!open));body.style.maxHeight=open?'0':(body.firstElementChild.scrollHeight+8)+'px';});
+  });
+  document.querySelectorAll('.chart-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const open=btn.getAttribute('aria-expanded')==='true', body=btn.nextElementSibling;
+      btn.setAttribute('aria-expanded',String(!open));
+      body.classList.toggle('open',!open);
+      if(!open && !btn.dataset.loaded){
+        btn.dataset.loaded='1';
+        const sym=btn.dataset.sym, cont=body.querySelector('.tv');
+        if(window.TradingView && cont){
+          new TradingView.widget({container_id:cont.id, symbol:(TV[sym]||sym), interval:'D', timezone:'Etc/UTC', theme:'light', style:'1', locale:'en', autosize:true, hide_side_toolbar:true, allow_symbol_change:false, save_image:false, backgroundColor:'#ffffff'});
+        } else if(cont){
+          cont.innerHTML='<div style="padding:20px;font-size:12px;color:#8C867B">Chart couldn’t load — <a href="https://www.tradingview.com/chart/?symbol='+(TV[sym]||sym)+'" target="_blank" style="color:#A8884E">open in TradingView ↗</a></div>';
+        }
+      }
+    });
   });
 }
 
