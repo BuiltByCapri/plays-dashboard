@@ -1,14 +1,14 @@
 {
   "updated": "2026-08-05",
-  "analysis_date": "2026-06-09",
+  "analysis_date": "2026-08-05",
   "names": [
     {
       "sym": "SOUN",
       "co": "SoundHound AI",
       "yf": "SOUN",
-      "price": "$6.49",
-      "spot": 6.49,
-      "chg": "−4.6% · 1mo",
+      "price": "$6.43",
+      "spot": 6.43,
+      "chg": "−3.2% · 1mo",
       "dir": "down",
       "anchor": {
         "K": 8,
@@ -30,47 +30,47 @@
         ],
         [
           "In range",
-          "79%"
+          "74%"
         ]
       ],
       "call": {
         "verdict": "wait",
-        "vlabel": "Wait",
+        "vlabel": "Watch",
         "why": [
           [
             "The read",
-            "Broke the $7.85 support I was watching and kept bleeding to $6.92 — the bounce never came. Washed out down here, but no buyer showing up yet."
+            "Mid-range at <b>74%</b> between $5.70 and $6.69, RSI 52. Drifting, no momentum either way."
           ],
           [
             "Watch for",
-            "A real base + reclaim of ~$7.50 on volume before any call. Not yet — don't catch it."
+            "A clean break of $6.69 would start something. Until then, no setup = no trade."
           ]
         ]
       },
       "put": {
-        "verdict": "wait",
-        "vlabel": "Late",
+        "verdict": "skip",
+        "vlabel": "Skip",
         "why": [
           [
             "The read",
-            "Puts have been THE winner here ($8 → $6.92). But the easy down-money already happened — at $6.92 it's oversold and due a bounce. Buying puts now = catching the knife on the short side."
+            "Mid-range at <b>74%</b> between $5.70 and $6.69 — two-sided, not breaking down."
           ],
           [
             "Watch for",
-            "A failed bounce / rejection at ~$7.85 is a cleaner short entry than chasing fresh lows. Shorting down here is late."
+            "No clean put edge here. A break of $5.70 would change that."
           ]
         ]
       },
-      "ivNear": 1.238,
-      "ivFar": 0.971
+      "ivNear": 0.584,
+      "ivFar": 1.0
     },
     {
       "sym": "HIMS",
       "co": "Hims & Hers Health",
       "yf": "HIMS",
-      "price": "$31.92",
-      "spot": 31.92,
-      "chg": "−11.5% · 1mo",
+      "price": "$31.65",
+      "spot": 31.65,
+      "chg": "−12.5% · 1mo",
       "dir": "down",
       "anchor": {
         "K": 26,
@@ -92,7 +92,7 @@
         ],
         [
           "In range",
-          "57%"
+          "55%"
         ]
       ],
       "call": {
@@ -101,11 +101,11 @@
         "why": [
           [
             "The read",
-            "Faded from the highs; the $30 break never came. Drifting in the upper-mid of its range — no momentum either way."
+            "Mid-range at <b>55%</b> between $25.00 and $37.17, RSI 46. Drifting, no momentum either way."
           ],
           [
             "Watch for",
-            "A clean break of $30 for a call. Until then, no setup."
+            "A clean break of $37.17 would start something. Until then, no setup = no trade."
           ]
         ]
       },
@@ -115,24 +115,24 @@
         "why": [
           [
             "The read",
-            "Too two-sided to short — it's holding the upper-mid range, not breaking down. No clean put edge."
+            "Mid-range at <b>55%</b> between $25.00 and $37.17 — two-sided, not breaking down."
           ],
           [
             "Watch for",
-            "A break of ~$22 support would open a put case. Not there."
+            "No clean put edge here. A break of $25.00 would change that."
           ]
         ]
       },
-      "ivNear": 1.29,
-      "ivFar": 1.072
+      "ivNear": 0.747,
+      "ivFar": 0.969
     },
     {
       "sym": "AI",
       "co": "C3.ai",
       "yf": "AI",
-      "price": "$9.94",
-      "spot": 9.94,
-      "chg": "+12.1% · 1mo",
+      "price": "$9.91",
+      "spot": 9.91,
+      "chg": "+11.0% · 1mo",
       "dir": "up",
       "anchor": {
         "K": 10,
@@ -154,47 +154,47 @@
         ],
         [
           "In range",
-          "94%"
+          "93%"
         ]
       ],
       "call": {
-        "verdict": "skip",
-        "vlabel": "Skip",
-        "why": [
-          [
-            "The read",
-            "Dead-cat bounce fading, stuck mid-range, catalyst spent."
-          ],
-          [
-            "Watch for",
-            "Nothing for calls — $11.75 resistance overhead, nothing new until Sept 9."
-          ]
-        ]
-      },
-      "put": {
         "verdict": "wait",
         "vlabel": "Watch",
         "why": [
           [
             "The read",
-            "The mildest SHORT lean on your list — a faded bounce rolling back over in a long downtrend. But a lot's already fallen ($30 → $10), so it's not pristine."
+            "Mid-range at <b>93%</b> between $8.15 and $10.05, RSI 67. Drifting, no momentum either way."
           ],
           [
             "Watch for",
-            "A break of ~$8.65 support = the put trigger. Above it, no rush — let it break first."
+            "A clean break of $10.05 would start something. Until then, no setup = no trade."
           ]
         ]
       },
-      "ivNear": 0.672,
-      "ivFar": 0.811
+      "put": {
+        "verdict": "skip",
+        "vlabel": "Skip",
+        "why": [
+          [
+            "The read",
+            "Mid-range at <b>93%</b> between $8.15 and $10.05 — two-sided, not breaking down."
+          ],
+          [
+            "Watch for",
+            "No clean put edge here. A break of $8.15 would change that."
+          ]
+        ]
+      },
+      "ivNear": 0.617,
+      "ivFar": 0.779
     },
     {
       "sym": "ODD",
       "co": "Oddity Tech · AI beauty",
       "yf": "ODD",
-      "price": "$15.08",
-      "spot": 15.08,
-      "chg": "−8.7% · 1mo",
+      "price": "$15.22",
+      "spot": 15.22,
+      "chg": "−13.1% · 1mo",
       "dir": "down",
       "anchor": {
         "K": 10,
@@ -213,20 +213,20 @@
         ],
         [
           "In range",
-          "28%"
+          "32%"
         ]
       ],
       "call": {
-        "verdict": "skip",
-        "vlabel": "Skip",
+        "verdict": "wait",
+        "vlabel": "Watch",
         "why": [
           [
             "The read",
-            "Small bounce off the floor, but still −25% on the month with the earnings damage unresolved — and the options trade thin."
+            "Mid-range at <b>32%</b> between $14.18 and $17.43, RSI 42. Drifting, no momentum either way."
           ],
           [
             "Watch for",
-            "A real base, not a dead-cat pop. Thin options make either side expensive to trade."
+            "A clean break of $17.43 would start something. Until then, no setup = no trade."
           ]
         ]
       },
@@ -236,24 +236,24 @@
         "why": [
           [
             "The read",
-            "Just bounced — puts would be fighting the turn now, and the options are too thin (~1M shares/day) to short cleanly anyway."
+            "Mid-range at <b>32%</b> between $14.18 and $17.43 — two-sided, not breaking down."
           ],
           [
             "Watch for",
-            "If it rolls back over and loses $9.81 on volume, maybe — but wide spreads make it rough either way."
+            "No clean put edge here. A break of $14.18 would change that."
           ]
         ]
       },
-      "ivNear": 1.145,
-      "ivFar": 1.063
+      "ivNear": 1.715,
+      "ivFar": 1.164
     },
     {
       "sym": "ELF",
       "co": "e.l.f. Beauty",
       "yf": "ELF",
-      "price": "$89.66",
-      "spot": 89.66,
-      "chg": "+20.9% · 1mo",
+      "price": "$86.37",
+      "spot": 86.37,
+      "chg": "+14.6% · 1mo",
       "dir": "up",
       "anchor": {
         "K": 50,
@@ -271,24 +271,24 @@
         ],
         [
           "Resistance",
-          "$89.66"
+          "$87.84"
         ],
         [
           "In range",
-          "100%"
+          "91%"
         ]
       ],
       "call": {
-        "verdict": "mute",
-        "vlabel": "Track only",
+        "verdict": "wait",
+        "vlabel": "Watch",
         "why": [
           [
             "The read",
-            "The one name showing life — reclaimed the $50 floor and bounced to $53. But a call here runs $300+, well out of your $100 budget."
+            "Pressing the 20-day high at <b>$87.84</b>, about 1.7% away, with the trend up and RSI 69. Coiled, not broken out."
           ],
           [
             "Watch for",
-            "Track the bounce; trade it for real when the account's bigger."
+            "Take the break of $87.84 on volume — not the anticipation of it."
           ]
         ]
       },
@@ -298,16 +298,26 @@
         "why": [
           [
             "The read",
-            "Just turned UP off $50 — puts are the wrong side now. The breakdown already played out and reversed."
+            "Above both averages ($79.27 / $69.20) and +14.6% on the month. Shorting strength is how you get run over."
           ],
           [
             "Watch for",
-            "Nothing short here; it's recovering, not breaking down."
+            "It has to lose $79.27 first. No short edge until then."
           ]
         ]
       },
-      "ivNear": 1.151,
-      "ivFar": 0.854
+      "ivNear": 0.535,
+      "ivFar": 0.853
     }
-  ]
+  ],
+  "reads": {
+    "call": [
+      "This week · calls",
+      "<b>Quiet for longs.</b> Nothing's a clean call right now. SOUN, HIMS, AI, ODD &amp; ELF are worth watching, not buying. No setup = no trade."
+    ],
+    "put": [
+      "This week · puts",
+      "<b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, HIMS, AI, ODD &amp; ELF have no edge on this side. Don't chase knives that already fell."
+    ]
+  }
 }

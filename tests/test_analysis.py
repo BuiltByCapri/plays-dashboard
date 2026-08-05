@@ -341,5 +341,67 @@ class TestWeeklyRead(unittest.TestCase):
         self.assertIn("ODD", html)
 
 
+class TestSnapshotIntegration(unittest.TestCase):
+    """The full path from a price series to a rendered verdict, offline."""
+
+    @staticmethod
+    def series(values):
+        return [float(v) for v in values]
+
+    def build(self, closes, iv=None):
+        rv = analysis.realized_vol(closes)
+        spot = closes[-1]
+        return dict(
+            sym="TEST", spot=spot,
+            sma20=analysis.sma(closes, 20), sma50=analysis.sma(closes, 50),
+            rsi=analysis.rsi(closes, 14),
+            pos=analysis.range_position(closes, 20),
+            hi20=max(closes[-20:]), lo20=min(closes[-20:]),
+            chg_1mo=analysis.pct_change(closes, 21),
+            chg_5d=analysis.pct_change(closes, 5),
+            iv=iv if iv is not None else rv, rvol=rv,
+            call_cost=analysis.contract_cost("call", spot, 8, iv or rv),
+            put_cost=analysis.contract_cost("put", spot, 8, iv or rv),
+            near_dte=8,
+        )
+
+    def test_steady_uptrend_produces_a_renderable_call_verdict(self):
+        closes = self.series([10.0 * (1.004 ** i) for i in range(60)])
+        s = self.build(closes)
+        d = analysis.decide("call", s)
+        why = analysis.render("call", d, s)
+        self.assertIn(d.verdict, {"go", "wait", "skip", "mute"})
+        self.assertEqual(len(why), 2)
+        self.assertNotIn("{", why[0][1] + why[1][1])
+
+    def test_sustained_downtrend_is_not_a_call(self):
+        closes = self.series([100.0 * (0.985 ** i) for i in range(60)])
+        s = self.build(closes)
+        self.assertNotEqual(analysis.decide("call", s).verdict, "go")
+
+    def test_expensive_name_is_muted_on_both_sides(self):
+        closes = self.series([90.0 + i * 0.1 for i in range(60)])
+        s = self.build(closes, iv=1.15)
+        self.assertEqual(analysis.decide("call", s).verdict, "mute")
+        self.assertEqual(analysis.decide("put", s).verdict, "mute")
+
+    def test_every_name_in_the_committed_data_renders(self):
+        """Guards against a snapshot key the templates reference but refresh omits."""
+        import json
+        import os
+        here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with open(os.path.join(here, "data.json")) as f:
+            data = json.load(f)
+        for name in data["names"]:
+            closes = self.series([name["spot"]] * 60)
+            s = self.build(closes)
+            s["sym"] = name["sym"]
+            for direction in ("call", "put"):
+                d = analysis.decide(direction, s)
+                why = analysis.render(direction, d, s)
+                self.assertEqual(len(why), 2, name["sym"])
+                self.assertNotIn("{", why[0][1] + why[1][1])
+
+
 if __name__ == "__main__":
     unittest.main()

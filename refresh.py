@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 """Daily refresh for the My Plays dashboard.
 
-Pulls fresh daily history + ATM implied vol (yfinance, free, no key) for each
-name and updates data.json: price, 1-month change, support/resistance (20-day
-low/high), where it sits in range, AND ivNear/ivFar (so the price analyzer's
-fair-value stays accurate as prices move). Leaves the human analysis (call/put
-verdict + why) untouched; that carries its own `analysis_date`.
+Pulls fresh daily history and ATM implied vol (yfinance, free, no key) for each
+name, then regenerates everything the page treats as analysis: price, 1-month
+change, support/resistance, implied vol, the call/put verdicts, the "why" text,
+and the week's read.
+
+This module owns all I/O. The analysis itself lives in analysis.py, which is
+pure and tested offline.
 """
-import json, datetime, sys, os, math
+import datetime
+import json
+import math
+import os
+import sys
+
+import analysis
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data.json")
@@ -15,6 +23,7 @@ MINUS = "−"
 
 
 def history(ticker):
+    """Three months of daily closes, oldest first. None if unavailable."""
     import yfinance as yf
     raw = yf.download(ticker, period="3mo", interval="1d",
                       progress=False, auto_adjust=True)
@@ -26,76 +35,151 @@ def history(ticker):
     return [float(x) for x in c.values if x == x]
 
 
-def realized_vol(c):
-    rets = [math.log(c[i] / c[i - 1]) for i in range(1, len(c)) if c[i - 1] > 0]
-    if len(rets) < 5:
-        return 0.8
-    m = sum(rets[-20:]) / len(rets[-20:])
-    var = sum((r - m) ** 2 for r in rets[-20:]) / len(rets[-20:])
-    return max(0.1, math.sqrt(var) * math.sqrt(252))
+def atm_iv(ticker, spot, target_days, realized):
+    """ATM implied vol for the expiry nearest target_days, sanity-checked.
 
-
-def atm_iv(ticker, spot, target_days, fallback):
-    """ATM implied vol from yfinance for the expiry nearest target_days."""
+    yfinance reports implied vol off illiquid strikes that can be wildly wrong.
+    A reading far above the name's own realized vol is treated as a bad fill and
+    discarded — it would otherwise flow straight into the fair-value estimate the
+    page shows the user.
+    """
     try:
         import yfinance as yf
         tk = yf.Ticker(ticker)
         exps = tk.options
         if not exps:
-            return fallback
+            return round(realized, 3)
         today = datetime.date.today()
-        best = min(exps, key=lambda e: abs((datetime.date.fromisoformat(e) - today).days - target_days))
-        ch = tk.option_chain(best).calls
-        row = ch.iloc[(ch["strike"] - spot).abs().argmin()]
+        best = min(exps, key=lambda e: abs(
+            (datetime.date.fromisoformat(e) - today).days - target_days))
+        chain = tk.option_chain(best).calls
+        row = chain.iloc[(chain["strike"] - spot).abs().argmin()]
         iv = float(row["impliedVolatility"])
-        if 0.1 < iv < 4.0:      # sane band; ignore garbage from illiquid strikes
-            return round(iv, 3)
-        return fallback
+        if not (0.1 < iv < 4.0):
+            return round(realized, 3)
+        if iv > realized * analysis.IV_SANITY_MULTIPLE:
+            print("    implied %.2f vs realized %.2f — discarding as a bad fill"
+                  % (iv, realized), flush=True)
+            return round(realized, 3)
+        return round(iv, 3)
     except Exception:
-        return fallback
+        return round(realized, 3)
 
 
-def refresh(name):
-    c = history(name["yf"])
-    if not c or len(c) < 22:
-        print(f"  {name['sym']}: no/short data, keeping previous", flush=True)
-        return False
-    last, mo = c[-1], c[-21]
-    pct = (last - mo) / mo * 100.0
-    win = c[-20:]
-    lo20, hi20 = min(win), max(win)
-    pos = round((last - lo20) / (hi20 - lo20) * 100) if hi20 > lo20 else 50
-    rv = realized_vol(c)
+def days_to_next_friday(today):
+    """Calendar days to the coming Friday, matching index.html's SHORT expiry."""
+    ahead = (4 - today.weekday()) % 7
+    return ahead if ahead else 7
 
-    name["price"] = f"${last:.2f}"
-    name["spot"] = round(last, 2)
-    name["chg"] = ("+" if pct >= 0 else MINUS) + f"{abs(pct):.1f}% · 1mo"
+
+def build_snapshot(name, closes, near_dte):
+    """Everything analysis.py needs for one name. None if the series is too short."""
+    if len(closes) < 51:
+        return None
+    spot = closes[-1]
+    rvol = analysis.realized_vol(closes)
+    iv_near = atm_iv(name["yf"], spot, near_dte, rvol)
+    iv_far = atm_iv(name["yf"], spot, 30, iv_near)
+    window = closes[-20:]
+    return {
+        "sym": name["sym"],
+        "spot": spot,
+        "sma20": analysis.sma(closes, 20),
+        "sma50": analysis.sma(closes, 50),
+        "rsi": analysis.rsi(closes, 14),
+        "pos": analysis.range_position(closes, 20),
+        "hi20": max(window),
+        "lo20": min(window),
+        "chg_1mo": analysis.pct_change(closes, 21) or 0.0,
+        "chg_5d": analysis.pct_change(closes, 5) or 0.0,
+        "iv": iv_near,
+        "iv_far": iv_far,
+        "rvol": rvol,
+        "near_dte": near_dte,
+        "call_cost": analysis.contract_cost("call", spot, near_dte, iv_near),
+        "put_cost": analysis.contract_cost("put", spot, near_dte, iv_near),
+    }
+
+
+def apply_snapshot(name, snap):
+    """Write price fields and generated analysis back onto one name."""
+    spot, pct = snap["spot"], snap["chg_1mo"]
+    name["price"] = "$%.2f" % spot
+    name["spot"] = round(spot, 2)
+    name["chg"] = ("+" if pct >= 0 else MINUS) + "%.1f%% · 1mo" % abs(pct)
     name["dir"] = "up" if pct >= 0 else "down"
-    name["levels"] = [["Support", f"${lo20:.2f}"], ["Resistance", f"${hi20:.2f}"], ["In range", f"{pos}%"]]
-    name["ivNear"] = atm_iv(name["yf"], last, 8, round(rv, 3))
-    name["ivFar"] = atm_iv(name["yf"], last, 30, name["ivNear"])
-    print(f"  {name['sym']}: ${last:.2f} ({name['chg']}) range ${lo20:.2f}-${hi20:.2f} pos {pos}%  ivN {name['ivNear']*100:.0f}% ivF {name['ivFar']*100:.0f}%", flush=True)
-    return True
+    name["levels"] = [
+        ["Support", "$%.2f" % snap["lo20"]],
+        ["Resistance", "$%.2f" % snap["hi20"]],
+        ["In range", "%d%%" % round(snap["pos"])],
+    ]
+    name["ivNear"] = snap["iv"]
+    name["ivFar"] = snap["iv_far"]
+
+    decisions = {}
+    for direction in ("call", "put"):
+        d = analysis.decide(direction, snap)
+        decisions[direction] = d
+        name[direction] = {
+            "verdict": d.verdict,
+            "vlabel": d.vlabel,
+            "why": analysis.render(direction, d, snap),
+        }
+    return decisions
 
 
 def main():
     with open(DATA) as f:
-        d = json.load(f)
-    print("Refreshing...", flush=True)
-    any_ok = False
-    for n in d["names"]:
+        data = json.load(f)
+
+    today = datetime.date.today()
+    near_dte = days_to_next_friday(today)
+    print("Refreshing (near expiry %dd)..." % near_dte, flush=True)
+
+    results = {"call": [], "put": []}
+    refreshed = 0
+
+    for name in data["names"]:
         try:
-            any_ok = refresh(n) or any_ok
+            closes = history(name["yf"])
+            snap = build_snapshot(name, closes, near_dte) if closes else None
         except Exception as e:
-            print(f"  {n['sym']}: ERROR {type(e).__name__}: {e}", flush=True)
-    if not any_ok:
+            print("  %s: ERROR %s: %s" % (name["sym"], type(e).__name__, e), flush=True)
+            snap = None
+
+        if snap is None:
+            print("  %s: no/short data, keeping previous price and verdict"
+                  % name["sym"], flush=True)
+            continue
+
+        decisions = apply_snapshot(name, snap)
+        refreshed += 1
+        for direction in ("call", "put"):
+            results[direction].append({"sym": name["sym"],
+                                       "decision": decisions[direction]})
+        print("  %s: $%.2f (%s) range $%.2f-$%.2f pos %d%% iv %.0f%% rv %.0f%% "
+              "| call %s/%s put %s/%s" % (
+                  name["sym"], snap["spot"], name["chg"], snap["lo20"], snap["hi20"],
+                  round(snap["pos"]), snap["iv"] * 100, snap["rvol"] * 100,
+                  decisions["call"].verdict, decisions["call"].rule_id,
+                  decisions["put"].verdict, decisions["put"].rule_id), flush=True)
+
+    if not refreshed:
         print("Nothing refreshed — leaving data.json unchanged.", flush=True)
         sys.exit(0)
-    d["updated"] = datetime.date.today().isoformat()
+
+    data["reads"] = {
+        "call": analysis.summarize("call", results["call"]),
+        "put": analysis.summarize("put", results["put"]),
+    }
+    data["updated"] = today.isoformat()
+    data["analysis_date"] = today.isoformat()
+
     with open(DATA, "w") as f:
-        json.dump(d, f, ensure_ascii=False, indent=2)
+        json.dump(data, f, ensure_ascii=False, indent=2)
         f.write("\n")
-    print(f"Done. updated = {d['updated']}", flush=True)
+    print("Done. %d/%d refreshed. updated = analysis_date = %s"
+          % (refreshed, len(data["names"]), data["updated"]), flush=True)
 
 
 if __name__ == "__main__":
