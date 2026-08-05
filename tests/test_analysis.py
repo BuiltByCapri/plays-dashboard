@@ -262,6 +262,15 @@ class TestProse(unittest.TestCase):
                 self.assertIsNone(bare.search(text),
                                   "unescaped & in template: %r" % text)
 
+    def test_cosmetic_none_does_not_break_rendering(self):
+        """chg_1mo is cosmetic and unguarded by decide() — it must not crash render()."""
+        s = snap(spot=12.0, sma20=11.0, sma50=10.0, pos=80.0, rsi=62.0, chg_1mo=None)
+        d = analysis.decide("put", s)
+        self.assertEqual(d.rule_id, "no_short_edge")
+        why = analysis.render("put", d, s)
+        self.assertEqual(len(why), 2)
+        self.assertNotIn("{", why[0][1] + why[1][1])
+
 
 if __name__ == "__main__":
     unittest.main()

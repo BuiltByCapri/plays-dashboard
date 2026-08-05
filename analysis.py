@@ -277,6 +277,12 @@ def _prose_values(direction, snap):
         mult=cost / BUDGET if BUDGET else 0.0,
         budget=BUDGET,
         dist_hi=((hi20 - snap["spot"]) / hi20 * 100.0) if hi20 > 0 else 0.0,
+        # Cosmetic values get defaulted: they don't drive verdicts, so a None
+        # from pct_change() or similar on short series must not crash rendering.
+        # Decision-driving values (pos, rsi, sma20, sma50, hi20, lo20) do not get
+        # defaulted; a None there means the analysis is genuinely broken and should
+        # fail loudly during decide(), not silently render incorrect output.
+        chg_1mo=(snap.get("chg_1mo") or 0.0),
         iv=(snap.get("iv") or 0.0) * 100.0,
         rvol=(snap.get("rvol") or 0.0) * 100.0,
     )
