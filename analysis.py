@@ -327,11 +327,19 @@ def summarize(direction, results):
     go, wait, skip, mute = syms("go"), syms("wait"), syms("skip"), syms("mute")
     rich = [r["sym"] for r in results if r["decision"].overlay == "rich_iv"]
 
+    # Exclude rich-IV names from the watching list to avoid naming them twice
+    rich_set = set(rich)
+    wait_only = [s for s in wait if s not in rich_set]
+
     parts = []
     if go:
         parts.append("<b>%s %s the clean %s%s.</b>" % (
             _join(go), "is" if len(go) == 1 else "are", word,
             "" if len(go) == 1 else "s"))
+    elif rich:
+        parts.append("<b>Nothing clean at these prices.</b> The %s setup's there — the premium isn't." % word
+                     if len(rich) == 1 else
+                     "<b>Nothing clean at these prices.</b> The %s setups are there — the premiums aren't." % word)
     else:
         parts.append("<b>Quiet for %s.</b> Nothing's a clean %s right now." % (side, word))
 
@@ -343,9 +351,9 @@ def summarize(direction, results):
         parts.append("%s %s no edge on this side." % (
             _join(skip), "has" if len(skip) == 1 else "have"))
 
-    if wait and not go:
+    if wait_only and not go:
         parts.append("%s %s worth watching, not buying." % (
-            _join(wait), "is" if len(wait) == 1 else "are"))
+            _join(wait_only), "is" if len(wait_only) == 1 else "are"))
 
     if mute:
         parts.append("%s %s priced past the $%.0f budget — tracking only." % (

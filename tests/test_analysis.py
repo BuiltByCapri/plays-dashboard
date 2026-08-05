@@ -318,6 +318,28 @@ class TestWeeklyRead(unittest.TestCase):
             self.assertNotIn("{", html)
             self.assertIsNone(re.search(r"&(?!amp;|lt;|gt;|#)", html))
 
+    def test_rich_iv_name_is_named_once_and_not_contradicted(self):
+        results = [result("SOUN", "wait", "clean_setup", "Rich", overlay="rich_iv"),
+                   result("HIMS", "skip", "no_short_edge", "Skip")]
+        _, html = analysis.summarize("call", results)
+        self.assertEqual(html.count("SOUN"), 1)
+        self.assertNotIn("Nothing's a clean", html)
+        self.assertIn("rich", html.lower())
+
+    def test_rich_iv_alongside_a_clean_go(self):
+        results = [result("AI", "go", "clean_setup", "Looks solid"),
+                   result("SOUN", "wait", "clean_setup", "Rich", overlay="rich_iv")]
+        _, html = analysis.summarize("call", results)
+        self.assertIn("AI", html)
+        self.assertEqual(html.count("SOUN"), 1)
+
+    def test_rich_iv_name_excluded_from_the_watching_list(self):
+        results = [result("SOUN", "wait", "clean_setup", "Rich", overlay="rich_iv"),
+                   result("ODD", "wait", "chop", "Watch")]
+        _, html = analysis.summarize("call", results)
+        self.assertEqual(html.count("SOUN"), 1)
+        self.assertIn("ODD", html)
+
 
 if __name__ == "__main__":
     unittest.main()
