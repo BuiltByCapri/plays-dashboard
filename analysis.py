@@ -12,6 +12,7 @@ Sections:
   4. The weekly read
 """
 import math
+from collections import namedtuple
 
 # --- constants -------------------------------------------------------------
 # Fitted judgments, not derived facts. See the spec for why each is set here.
@@ -127,3 +128,63 @@ def contract_cost(direction, spot, dte, iv):
     T = dte / 365.0
     premium = bs_put(spot, K, T, iv) if direction == "put" else bs_call(spot, K, T, iv)
     return premium * 100.0
+
+
+# --- 2. the verdict ladder -------------------------------------------------
+Decision = namedtuple("Decision", "verdict vlabel rule_id overlay")
+
+
+def cost_for(direction, snap):
+    """The ATM contract cost for this direction, in dollars."""
+    return snap["put_cost"] if direction == "put" else snap["call_cost"]
+
+
+def _iv_is_rich(snap):
+    rvol = snap.get("rvol") or 0.0
+    iv = snap.get("iv") or 0.0
+    return rvol > 0 and iv > rvol * RICH_IV_MULTIPLE
+
+
+def _call_rule(s):
+    spot, sma20, sma50 = s["spot"], s["sma20"], s["sma50"]
+    pos, rsi_v, hi20 = s["pos"], s["rsi"], s["hi20"]
+
+    if pos >= 90.0 and rsi_v >= 70.0:
+        return Decision("skip", "Extended", "extended", None)
+    if spot < sma20 < sma50 and pos <= 25.0:
+        return Decision("wait", "No base", "no_base", None)
+    if spot > sma20 and sma20 >= sma50 and 55.0 <= pos <= 85.0 and 50.0 <= rsi_v <= 68.0:
+        return Decision("go", "Looks solid", "clean_setup", None)
+    if hi20 > 0 and (hi20 - spot) / hi20 * 100.0 <= 3.0 and sma20 >= sma50 and rsi_v < 70.0:
+        return Decision("wait", "Watch", "breakout_pending", None)
+    return Decision("wait", "Watch", "chop", None)
+
+
+def _put_rule(s):
+    spot, sma20, sma50 = s["spot"], s["sma20"], s["sma50"]
+    pos, rsi_v = s["pos"], s["rsi"]
+
+    if pos <= 10.0 and rsi_v <= 30.0:
+        return Decision("wait", "Late", "washed_out", None)
+    if spot < sma20 < sma50 and pos <= 40.0 and 30.0 <= rsi_v <= 45.0:
+        return Decision("go", "Looks solid", "breakdown", None)
+    if spot > sma20 > sma50:
+        return Decision("skip", "Skip", "no_short_edge", None)
+    return Decision("skip", "Skip", "chop", None)
+
+
+def decide(direction, snap):
+    """Pick a verdict for one name in one direction. First matching rule wins.
+
+    Returns a Decision. `rule_id` selects the prose template; `overlay` carries
+    the rich-premium downgrade separately so the setup's own read survives it.
+    """
+    if cost_for(direction, snap) > BUDGET * BUDGET_MULTIPLE:
+        return Decision("mute", "Track only", "over_budget", None)
+
+    d = _call_rule(snap) if direction == "call" else _put_rule(snap)
+
+    # Direction is right but you'd be overpaying to express it.
+    if d.verdict == "go" and _iv_is_rich(snap):
+        return Decision("wait", "Rich", d.rule_id, "rich_iv")
+    return d

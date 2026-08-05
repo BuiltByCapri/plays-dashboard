@@ -83,5 +83,112 @@ class TestOptionPricing(unittest.TestCase):
         self.assertAlmostEqual(cost, premium * 100.0)
 
 
+def snap(**kw):
+    """A mid-range, unremarkable snapshot. Override only what a test cares about."""
+    base = dict(
+        sym="TEST", spot=10.0, sma20=10.0, sma50=10.0, rsi=50.0, pos=50.0,
+        hi20=12.0, lo20=8.0, chg_1mo=0.0, chg_5d=0.0, iv=0.8, rvol=0.8,
+        call_cost=50.0, put_cost=50.0, near_dte=8,
+    )
+    base.update(kw)
+    return base
+
+
+class TestVerdicts(unittest.TestCase):
+    def test_over_budget_mutes_regardless_of_setup(self):
+        # a textbook call setup, but the contract costs 6x budget
+        d = analysis.decide("call", snap(
+            spot=89.66, sma20=85.0, sma50=80.0, rsi=60.0, pos=70.0, call_cost=597.0))
+        self.assertEqual(d.verdict, "mute")
+        self.assertEqual(d.rule_id, "over_budget")
+
+    def test_budget_gate_uses_the_direction_specific_cost(self):
+        d = analysis.decide("call", snap(call_cost=90.0, put_cost=900.0))
+        self.assertNotEqual(d.rule_id, "over_budget")
+        d = analysis.decide("put", snap(call_cost=90.0, put_cost=900.0))
+        self.assertEqual(d.rule_id, "over_budget")
+
+    def test_call_extended_at_top_of_range_with_hot_rsi(self):
+        d = analysis.decide("call", snap(pos=95.0, rsi=74.0))
+        self.assertEqual(d.verdict, "skip")
+        self.assertEqual(d.rule_id, "extended")
+
+    def test_call_no_base_under_both_averages_at_range_low(self):
+        d = analysis.decide("call", snap(spot=9.0, sma20=10.0, sma50=11.0, pos=15.0, rsi=35.0))
+        self.assertEqual(d.verdict, "wait")
+        self.assertEqual(d.rule_id, "no_base")
+
+    def test_call_clean_setup(self):
+        d = analysis.decide("call", snap(spot=11.0, sma20=10.5, sma50=10.0, pos=70.0, rsi=60.0))
+        self.assertEqual(d.verdict, "go")
+        self.assertEqual(d.rule_id, "clean_setup")
+
+    def test_call_breakout_pending_near_the_high(self):
+        d = analysis.decide("call", snap(
+            spot=11.9, sma20=11.0, sma50=10.0, hi20=12.0, pos=97.0, rsi=65.0))
+        self.assertEqual(d.verdict, "wait")
+        self.assertEqual(d.rule_id, "breakout_pending")
+
+    def test_call_chop_is_the_default(self):
+        d = analysis.decide("call", snap())
+        self.assertEqual(d.verdict, "wait")
+        self.assertEqual(d.rule_id, "chop")
+
+    def test_extended_beats_breakout_pending_when_both_match(self):
+        # near the high AND overbought: the earlier rule must win
+        d = analysis.decide("call", snap(
+            spot=11.9, sma20=11.0, sma50=10.0, hi20=12.0, pos=95.0, rsi=75.0))
+        self.assertEqual(d.rule_id, "extended")
+
+    def test_put_washed_out_at_range_low_and_oversold(self):
+        d = analysis.decide("put", snap(spot=8.1, sma20=9.5, sma50=10.5, pos=5.0, rsi=25.0))
+        self.assertEqual(d.verdict, "wait")
+        self.assertEqual(d.rule_id, "washed_out")
+        self.assertEqual(d.vlabel, "Late")
+
+    def test_put_breakdown_is_the_green_short(self):
+        d = analysis.decide("put", snap(spot=9.0, sma20=10.0, sma50=11.0, pos=30.0, rsi=38.0))
+        self.assertEqual(d.verdict, "go")
+        self.assertEqual(d.rule_id, "breakdown")
+
+    def test_put_no_short_edge_in_an_uptrend(self):
+        d = analysis.decide("put", snap(spot=12.0, sma20=11.0, sma50=10.0, pos=80.0, rsi=62.0))
+        self.assertEqual(d.verdict, "skip")
+        self.assertEqual(d.rule_id, "no_short_edge")
+
+    def test_put_chop_is_the_default_and_skips(self):
+        d = analysis.decide("put", snap())
+        self.assertEqual(d.verdict, "skip")
+        self.assertEqual(d.rule_id, "chop")
+
+    def test_washed_out_beats_breakdown_when_both_match(self):
+        d = analysis.decide("put", snap(spot=8.0, sma20=9.5, sma50=10.5, pos=8.0, rsi=28.0))
+        self.assertEqual(d.rule_id, "washed_out")
+
+    def test_rich_iv_downgrades_a_go_to_wait(self):
+        setup = dict(spot=11.0, sma20=10.5, sma50=10.0, pos=70.0, rsi=60.0)
+        cheap = analysis.decide("call", snap(iv=0.8, rvol=0.8, **setup))
+        rich = analysis.decide("call", snap(iv=1.6, rvol=0.8, **setup))
+        self.assertEqual(cheap.verdict, "go")
+        self.assertIsNone(cheap.overlay)
+        self.assertEqual(rich.verdict, "wait")
+        self.assertEqual(rich.overlay, "rich_iv")
+        self.assertEqual(rich.rule_id, "clean_setup")  # the setup read is unchanged
+
+    def test_rich_iv_does_not_upgrade_or_touch_a_skip(self):
+        d = analysis.decide("call", snap(pos=95.0, rsi=74.0, iv=1.6, rvol=0.8))
+        self.assertEqual(d.verdict, "skip")
+        self.assertIsNone(d.overlay)
+
+    def test_every_verdict_is_a_known_css_key(self):
+        allowed = {"go", "wait", "skip", "mute"}
+        for direction in ("call", "put"):
+            for pos in (0.0, 25.0, 50.0, 75.0, 100.0):
+                for r in (10.0, 35.0, 50.0, 65.0, 90.0):
+                    d = analysis.decide(direction, snap(pos=pos, rsi=r))
+                    self.assertIn(d.verdict, allowed)
+                    self.assertTrue(0 < len(d.vlabel) <= 12, d.vlabel)
+
+
 if __name__ == "__main__":
     unittest.main()
