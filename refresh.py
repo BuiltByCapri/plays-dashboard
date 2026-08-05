@@ -35,13 +35,66 @@ def history(ticker):
     return [float(x) for x in c.values if x == x]
 
 
+def _num(row, col):
+    """Read a numeric field off a yfinance option row; NaN and missing become None."""
+    try:
+        v = float(row[col])
+    except (KeyError, TypeError, ValueError):
+        return None
+    return None if v != v else v
+
+
+def _atm_row(chain_side, spot):
+    """The row (by nearest strike) closest to spot in one side of a chain."""
+    return chain_side.iloc[(chain_side["strike"] - spot).abs().argmin()]
+
+
+def _quote(row):
+    """(iv, bid, ask, open_interest) off one ATM row, as plain numbers."""
+    return (_num(row, "impliedVolatility"), _num(row, "bid"),
+            _num(row, "ask"), _num(row, "openInterest"))
+
+
+def _nearest_expiry(exps, target_days):
+    today = datetime.date.today()
+    return min(exps, key=lambda e: abs(
+        (datetime.date.fromisoformat(e) - today).days - target_days))
+
+
+def _resolve_iv(quote, realized):
+    """The IV to trust for one quote: itself if sane and liquid, else realized.
+
+    yfinance reports implied vol off illiquid strikes that can be wildly wrong.
+    Liquidity — not distance from realized vol — is what separates a real
+    elevated quote from a bad fill: short-dated IV structurally runs well above
+    20-day realized vol for legitimate reasons, so that comparison alone proves
+    nothing. A quote too thin or too wide to trade on is discarded and realized
+    vol is used instead, which would otherwise flow straight into the fair-value
+    estimate and the budget gate the page shows the user.
+    """
+    iv, bid, ask, oi = quote
+    if iv is None or not (0.1 < iv < 4.0):
+        return round(realized, 3)
+    if not analysis.quote_is_liquid(bid, ask, oi):
+        print("    iv %.2f (oi=%s bid=%s ask=%s) — illiquid quote, discarding"
+              % (iv, oi, bid, ask), flush=True)
+        return round(realized, 3)
+    return round(iv, 3)
+
+
+def _priced(direction, quote, spot, dte, iv):
+    """Dollar cost for one direction: the real quoted mid if usable, else Black-Scholes."""
+    _, bid, ask, oi = quote
+    if analysis.quote_is_liquid(bid, ask, oi):
+        return analysis.quote_cost(bid, ask)
+    return analysis.contract_cost(direction, spot, dte, iv)
+
+
 def atm_iv(ticker, spot, target_days, realized):
     """ATM implied vol for the expiry nearest target_days, sanity-checked.
 
-    yfinance reports implied vol off illiquid strikes that can be wildly wrong.
-    A reading far above the name's own realized vol is treated as a bad fill and
-    discarded — it would otherwise flow straight into the fair-value estimate the
-    page shows the user.
+    Used for the far expiry, which only feeds the page's fair-value display —
+    see near_quotes() for the near expiry, which also prices the budget gate.
     """
     try:
         import yfinance as yf
@@ -49,21 +102,36 @@ def atm_iv(ticker, spot, target_days, realized):
         exps = tk.options
         if not exps:
             return round(realized, 3)
-        today = datetime.date.today()
-        best = min(exps, key=lambda e: abs(
-            (datetime.date.fromisoformat(e) - today).days - target_days))
-        chain = tk.option_chain(best).calls
-        row = chain.iloc[(chain["strike"] - spot).abs().argmin()]
-        iv = float(row["impliedVolatility"])
-        if not (0.1 < iv < 4.0):
-            return round(realized, 3)
-        if iv > realized * analysis.IV_SANITY_MULTIPLE:
-            print("    implied %.2f vs realized %.2f — discarding as a bad fill"
-                  % (iv, realized), flush=True)
-            return round(realized, 3)
-        return round(iv, 3)
+        best = _nearest_expiry(exps, target_days)
+        quote = _quote(_atm_row(tk.option_chain(best).calls, spot))
+        return _resolve_iv(quote, realized)
     except Exception:
         return round(realized, 3)
+
+
+def near_quotes(ticker, spot, near_dte):
+    """ATM call and put quotes for the expiry nearest near_dte.
+
+    One option_chain() fetch returns both sides, so the near IV reading and
+    both the call_cost and put_cost budget-gate prices come from a single
+    round trip rather than three.
+
+    Returns (call_quote, put_quote), each an (iv, bid, ask, open_interest)
+    tuple of Nones if the name has no listed options.
+    """
+    none = (None, None, None, None)
+    try:
+        import yfinance as yf
+        tk = yf.Ticker(ticker)
+        exps = tk.options
+        if not exps:
+            return none, none
+        best = _nearest_expiry(exps, near_dte)
+        chain = tk.option_chain(best)
+        return (_quote(_atm_row(chain.calls, spot)),
+                _quote(_atm_row(chain.puts, spot)))
+    except Exception:
+        return none, none
 
 
 def days_to_next_friday(today):
@@ -78,8 +146,11 @@ def build_snapshot(name, closes, near_dte):
         return None
     spot = closes[-1]
     rvol = analysis.realized_vol(closes)
-    iv_near = atm_iv(name["yf"], spot, near_dte, rvol)
+
+    call_quote, put_quote = near_quotes(name["yf"], spot, near_dte)
+    iv_near = _resolve_iv(call_quote, rvol)
     iv_far = atm_iv(name["yf"], spot, 30, iv_near)
+
     window = closes[-20:]
     return {
         "sym": name["sym"],
@@ -96,8 +167,8 @@ def build_snapshot(name, closes, near_dte):
         "iv_far": iv_far,
         "rvol": rvol,
         "near_dte": near_dte,
-        "call_cost": analysis.contract_cost("call", spot, near_dte, iv_near),
-        "put_cost": analysis.contract_cost("put", spot, near_dte, iv_near),
+        "call_cost": _priced("call", call_quote, spot, near_dte, iv_near),
+        "put_cost": _priced("put", put_quote, spot, near_dte, iv_near),
     }
 
 

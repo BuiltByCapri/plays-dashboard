@@ -19,7 +19,8 @@ from collections import namedtuple
 BUDGET = 100.0            # the dollar budget the dashboard is built around
 BUDGET_MULTIPLE = 3.0     # over this multiple of budget, a name is "Track only"
 RICH_IV_MULTIPLE = 1.35   # implied over realized by this much = rich premium
-IV_SANITY_MULTIPLE = 2.5  # implied over realized by this much = bad fill, discard
+MIN_OPEN_INTEREST = 10    # below this, an option quote is a dead market
+MAX_SPREAD_RATIO = 0.5    # (ask-bid)/mid above this means the quote isn't trustworthy
 
 VOL_FLOOR = 0.1           # annualized; guards flat/degenerate series
 
@@ -128,6 +129,28 @@ def contract_cost(direction, spot, dte, iv):
     T = dte / 365.0
     premium = bs_put(spot, K, T, iv) if direction == "put" else bs_call(spot, K, T, iv)
     return premium * 100.0
+
+
+def quote_is_liquid(bid, ask, open_interest):
+    """True when an option quote is tight and traded enough to price off.
+
+    Liquidity, not the level of implied vol, is what separates a real elevated
+    quote from a bad fill. Short-dated IV structurally runs far above 20-day
+    realized vol for legitimate reasons, so comparing the two measures nothing.
+    """
+    if open_interest is None or open_interest < MIN_OPEN_INTEREST:
+        return False
+    if bid is None or ask is None or bid <= 0 or ask <= 0 or ask < bid:
+        return False
+    mid = (bid + ask) / 2.0
+    if mid <= 0:
+        return False
+    return (ask - bid) / mid <= MAX_SPREAD_RATIO
+
+
+def quote_cost(bid, ask):
+    """Dollar cost of one contract at the quoted mid."""
+    return (bid + ask) / 2.0 * 100.0
 
 
 # --- 2. the verdict ladder -------------------------------------------------

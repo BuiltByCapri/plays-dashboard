@@ -84,6 +84,28 @@ class TestOptionPricing(unittest.TestCase):
         self.assertAlmostEqual(cost, premium * 100.0)
 
 
+class TestQuoteLiquidity(unittest.TestCase):
+    def test_liquid_tight_quote_is_trusted(self):
+        # SOUN 2-day ATM: heavily traded, 2-cent spread
+        self.assertTrue(analysis.quote_is_liquid(0.40, 0.42, 7929))
+
+    def test_dead_market_quote_is_rejected(self):
+        # ODD 2-day ATM: 1 open interest, spread wider than the bid
+        self.assertFalse(analysis.quote_is_liquid(0.30, 1.80, 1))
+
+    def test_wide_but_traded_quote_is_trusted(self):
+        # ELF 2-day ATM: 33% spread but real open interest
+        self.assertTrue(analysis.quote_is_liquid(5.80, 8.10, 93))
+
+    def test_missing_or_crossed_quotes_are_rejected(self):
+        self.assertFalse(analysis.quote_is_liquid(None, 0.42, 7929))
+        self.assertFalse(analysis.quote_is_liquid(0.0, 0.42, 7929))
+        self.assertFalse(analysis.quote_is_liquid(0.50, 0.40, 7929))
+
+    def test_quote_cost_is_the_mid_per_hundred_shares(self):
+        self.assertAlmostEqual(analysis.quote_cost(5.80, 8.10), 695.0)
+
+
 def snap(**kw):
     """A mid-range, unremarkable snapshot. Override only what a test cares about."""
     base = dict(
@@ -100,6 +122,23 @@ class TestVerdicts(unittest.TestCase):
         # a textbook call setup, but the contract costs 6x budget
         d = analysis.decide("call", snap(
             spot=89.66, sma20=85.0, sma50=80.0, rsi=60.0, pos=70.0, call_cost=597.0))
+        self.assertEqual(d.verdict, "mute")
+        self.assertEqual(d.rule_id, "over_budget")
+
+    def test_quoted_cost_over_budget_mutes_even_when_black_scholes_would_not(self):
+        """The ELF regression: a discarded/fallback iv can make Black-Scholes
+        estimate a contract far cheaper than its real quoted price. The budget
+        gate must key off whatever cost is actually in the snapshot — which
+        refresh.py now sets from the quote when one is usable — not recompute
+        its own, cheaper estimate."""
+        bs_cost = analysis.contract_cost("call", 86.37, 2, 0.535)
+        quote_cost = analysis.quote_cost(5.80, 8.10)  # ELF's real near-dated quote
+        self.assertLess(bs_cost, analysis.BUDGET * analysis.BUDGET_MULTIPLE)
+        self.assertGreater(quote_cost, analysis.BUDGET * analysis.BUDGET_MULTIPLE)
+
+        d = analysis.decide("call", snap(
+            spot=86.37, sma20=79.27, sma50=69.20, rsi=69.3, pos=90.6,
+            hi20=87.84, call_cost=quote_cost, put_cost=quote_cost))
         self.assertEqual(d.verdict, "mute")
         self.assertEqual(d.rule_id, "over_budget")
 

@@ -61,7 +61,7 @@
           ]
         ]
       },
-      "ivNear": 0.584,
+      "ivNear": 1.898,
       "ivFar": 1.0
     },
     {
@@ -185,7 +185,7 @@
           ]
         ]
       },
-      "ivNear": 0.617,
+      "ivNear": 0.443,
       "ivFar": 0.779
     },
     {
@@ -244,8 +244,8 @@
           ]
         ]
       },
-      "ivNear": 1.715,
-      "ivFar": 1.164
+      "ivNear": 0.738,
+      "ivFar": 0.738
     },
     {
       "sym": "ELF",
@@ -279,45 +279,45 @@
         ]
       ],
       "call": {
-        "verdict": "wait",
-        "vlabel": "Watch",
+        "verdict": "mute",
+        "vlabel": "Track only",
         "why": [
           [
             "The read",
-            "Pressing the 20-day high at <b>$87.84</b>, about 1.7% away, with the trend up and RSI 69. Coiled, not broken out."
+            "An ATM contract runs about <b>$695</b> — 6.9× the $100 you're working with. The setup doesn't matter if you can't buy it."
           ],
           [
             "Watch for",
-            "Take the break of $87.84 on volume — not the anticipation of it."
+            "Tracking only. Shares or a spread are the way in here, not a straight call."
           ]
         ]
       },
       "put": {
-        "verdict": "skip",
-        "vlabel": "Skip",
+        "verdict": "mute",
+        "vlabel": "Track only",
         "why": [
           [
             "The read",
-            "Above both averages ($79.27 / $69.20) and +14.6% on the month. Shorting strength is how you get run over."
+            "An ATM put runs about <b>$533</b> — 5.3× the $100 you're working with. Can't express it at this size."
           ],
           [
             "Watch for",
-            "It has to lose $79.27 first. No short edge until then."
+            "Tracking only. Nothing to do on the short side at this price."
           ]
         ]
       },
-      "ivNear": 0.535,
-      "ivFar": 0.853
+      "ivNear": 2.173,
+      "ivFar": 2.173
     }
   ],
   "reads": {
     "call": [
       "This week · calls",
-      "<b>Quiet for longs.</b> Nothing's a clean call right now. SOUN, HIMS, AI, ODD &amp; ELF are worth watching, not buying. No setup = no trade."
+      "<b>Quiet for longs.</b> Nothing's a clean call right now. SOUN, HIMS, AI &amp; ODD are worth watching, not buying. ELF is priced past the $100 budget — tracking only. No setup = no trade."
     ],
     "put": [
       "This week · puts",
-      "<b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, HIMS, AI, ODD &amp; ELF have no edge on this side. Don't chase knives that already fell."
+      "<b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, HIMS, AI &amp; ODD have no edge on this side. ELF is priced past the $100 budget — tracking only. Don't chase knives that already fell."
     ]
   }
 }
