@@ -11,7 +11,6 @@ pure and tested offline.
 """
 import datetime
 import json
-import math
 import os
 import sys
 
@@ -61,7 +60,7 @@ def _nearest_expiry(exps, target_days):
         (datetime.date.fromisoformat(e) - today).days - target_days))
 
 
-def _resolve_iv(quote, realized):
+def _resolve_iv(quote, realized, ticker=None, expiry=None):
     """The IV to trust for one quote: itself if sane and liquid, else realized.
 
     yfinance reports implied vol off illiquid strikes that can be wildly wrong.
@@ -71,13 +70,17 @@ def _resolve_iv(quote, realized):
     nothing. A quote too thin or too wide to trade on is discarded and realized
     vol is used instead, which would otherwise flow straight into the fair-value
     estimate and the budget gate the page shows the user.
+
+    `ticker`/`expiry` are for the discard log line only — without them, the job
+    log can't say which name and expiry a discarded quote belonged to.
     """
     iv, bid, ask, oi = quote
     if iv is None or not (0.1 < iv < 4.0):
         return round(realized, 3)
     if not analysis.quote_is_liquid(bid, ask, oi):
-        print("    iv %.2f (oi=%s bid=%s ask=%s) — illiquid quote, discarding"
-              % (iv, oi, bid, ask), flush=True)
+        where = "%s %s" % (ticker, expiry) if ticker else "quote"
+        print("    %s: iv %.2f (oi=%s bid=%s ask=%s) — illiquid quote, discarding"
+              % (where, iv, oi, bid, ask), flush=True)
         return round(realized, 3)
     return round(iv, 3)
 
@@ -95,17 +98,23 @@ def atm_iv(ticker, spot, target_days, realized):
 
     Used for the far expiry, which only feeds the page's fair-value display —
     see near_quotes() for the near expiry, which also prices the budget gate.
+    A failure here just falls back to realized vol and is logged; it never
+    blocks the refresh, since nothing downstream gates on the far reading.
     """
     try:
         import yfinance as yf
         tk = yf.Ticker(ticker)
         exps = tk.options
         if not exps:
+            print("    %s: no listed option expiries — far iv falls back to realized"
+                  % ticker, flush=True)
             return round(realized, 3)
         best = _nearest_expiry(exps, target_days)
         quote = _quote(_atm_row(tk.option_chain(best).calls, spot))
-        return _resolve_iv(quote, realized)
-    except Exception:
+        return _resolve_iv(quote, realized, ticker, best)
+    except Exception as e:
+        print("    %s: far option chain failed (%s: %s) — falls back to realized"
+              % (ticker, type(e).__name__, e), flush=True)
         return round(realized, 3)
 
 
@@ -116,22 +125,39 @@ def near_quotes(ticker, spot, near_dte):
     both the call_cost and put_cost budget-gate prices come from a single
     round trip rather than three.
 
-    Returns (call_quote, put_quote), each an (iv, bid, ask, open_interest)
-    tuple of Nones if the name has no listed options.
+    Returns (call_quote, put_quote, expiry) on success — each quote an
+    (iv, bid, ask, open_interest) tuple, even if a quote later turns out
+    illiquid (handled downstream via the usual realized-vol/Black-Scholes
+    fallback, which is fine — that's the design, not a failure).
+
+    Returns None, not a tuple of empty quotes, if no near chain could be
+    fetched at all. Falling through silently here would let build_snapshot
+    price the budget gate off Black-Scholes at realized vol with zero real
+    quote behind it — exactly the unbounded-cost bug the liquidity design
+    change fixed — so a missing chain must be logged and treated by the
+    caller as a failed refresh for the name, not a quiet downgrade.
     """
-    none = (None, None, None, None)
     try:
         import yfinance as yf
         tk = yf.Ticker(ticker)
         exps = tk.options
-        if not exps:
-            return none, none
-        best = _nearest_expiry(exps, near_dte)
+    except Exception as e:
+        print("    %s: could not list option expiries (%s: %s) — near chain unavailable"
+              % (ticker, type(e).__name__, e), flush=True)
+        return None
+    if not exps:
+        print("    %s: no listed option expiries — near chain unavailable"
+              % ticker, flush=True)
+        return None
+    best = _nearest_expiry(exps, near_dte)
+    try:
         chain = tk.option_chain(best)
         return (_quote(_atm_row(chain.calls, spot)),
-                _quote(_atm_row(chain.puts, spot)))
-    except Exception:
-        return none, none
+                _quote(_atm_row(chain.puts, spot)), best)
+    except Exception as e:
+        print("    %s %s: near option chain failed (%s: %s) — near chain unavailable"
+              % (ticker, best, type(e).__name__, e), flush=True)
+        return None
 
 
 def days_to_next_friday(today):
@@ -141,15 +167,28 @@ def days_to_next_friday(today):
 
 
 def build_snapshot(name, closes, near_dte):
-    """Everything analysis.py needs for one name. None if the series is too short."""
+    """Everything analysis.py needs for one name.
+
+    None if the series is too short, or if the near option chain could not be
+    fetched at all — in either case the name keeps its previous price and
+    verdict rather than publish a cost estimate with no real quote behind it.
+    """
     if len(closes) < 51:
         return None
     spot = closes[-1]
     rvol = analysis.realized_vol(closes)
 
-    call_quote, put_quote = near_quotes(name["yf"], spot, near_dte)
-    iv_near = _resolve_iv(call_quote, rvol)
-    iv_far = atm_iv(name["yf"], spot, 30, iv_near)
+    near = near_quotes(name["yf"], spot, near_dte)
+    if near is None:
+        return None
+    call_quote, put_quote, near_expiry = near
+    iv_near = _resolve_iv(call_quote, rvol, name["yf"], near_expiry)
+    # Falls back to realized vol, not iv_near: iv_near can be an extreme
+    # short-dated reading (e.g. a 2-day ATM print well above its annualized
+    # realized vol for legitimate reasons), and using it as the far-expiry
+    # fallback would let that spike leak into the ~1mo fair-value the page
+    # shows, uncapped, if the far quote itself turns out to be unusable.
+    iv_far = atm_iv(name["yf"], spot, 30, rvol)
 
     window = closes[-20:]
     return {
@@ -209,6 +248,7 @@ def main():
 
     results = {"call": [], "put": []}
     refreshed = 0
+    stale = []
 
     for name in data["names"]:
         try:
@@ -221,6 +261,7 @@ def main():
         if snap is None:
             print("  %s: no/short data, keeping previous price and verdict"
                   % name["sym"], flush=True)
+            stale.append(name["sym"])
             continue
 
         decisions = apply_snapshot(name, snap)
@@ -240,8 +281,8 @@ def main():
         sys.exit(0)
 
     data["reads"] = {
-        "call": analysis.summarize("call", results["call"]),
-        "put": analysis.summarize("put", results["put"]),
+        "call": analysis.summarize("call", results["call"], stale=stale),
+        "put": analysis.summarize("put", results["put"], stale=stale),
     }
     data["updated"] = today.isoformat()
     data["analysis_date"] = today.isoformat()

@@ -140,16 +140,19 @@ def quote_is_liquid(bid, ask, open_interest):
     quote from a bad fill. Short-dated IV structurally runs far above 20-day
     realized vol for legitimate reasons, so comparing the two measures nothing.
 
-    Open interest is a hard gate: below MIN_OPEN_INTEREST a quote is a dead
-    market no matter how tight it looks (a stale quote with nobody in it). Above
-    that floor, the spread just needs to be tight by *either* measure: a small
-    ratio to the mid (MAX_SPREAD_RATIO), or a small number of cents
-    (MAX_ABS_SPREAD). The ratio alone would reject a 12-cent spread on an
+    Open interest is a hard gate: below MIN_OPEN_INTEREST, missing, or NaN
+    (a feed can report a NaN open interest for a listed-but-untraded strike,
+    and `nan < MIN_OPEN_INTEREST` is silently False, not a rejection — this is
+    checked for explicitly), a quote is a dead market no matter how tight it
+    looks. Above that floor, the spread just needs to be tight by *either*
+    measure: a small ratio to the mid (MAX_SPREAD_RATIO), or a small number of
+    cents (MAX_ABS_SPREAD). The ratio alone would reject a 12-cent spread on an
     18-cent option as "67% wide" even with thousands of contracts open — that's
     a one-cent-tick artifact of a cheap contract, not a bad fill, and the
     absolute-cents test catches it.
     """
-    if open_interest is None or open_interest < MIN_OPEN_INTEREST:
+    if (open_interest is None or open_interest != open_interest
+            or open_interest < MIN_OPEN_INTEREST):
         return False
     if bid is None or ask is None or bid <= 0 or ask <= 0 or ask < bid:
         return False
@@ -346,8 +349,13 @@ def _join(syms):
     return ", ".join(syms[:-1]) + " &amp; " + syms[-1]
 
 
-def summarize(direction, results):
-    """Assemble the week's read for one direction from all five verdicts."""
+def summarize(direction, results, stale=()):
+    """Assemble the week's read for one direction from all five verdicts.
+
+    `stale` lists symbols that failed to refresh this run and so are showing
+    a verdict from an earlier one — kept deliberately, but named so the read
+    doesn't silently imply every card on the board is current.
+    """
     is_call = direction == "call"
     label = "This week · " + ("calls" if is_call else "puts")
     word = "call" if is_call else "put"
@@ -393,6 +401,10 @@ def summarize(direction, results):
     if mute:
         parts.append("%s %s priced past the $%.0f budget — tracking only." % (
             _join(mute), "is" if len(mute) == 1 else "are", BUDGET))
+
+    if stale:
+        parts.append("%s didn't refresh today — %s rating below is from an earlier run." % (
+            _join(list(stale)), "its" if len(stale) == 1 else "their"))
 
     parts.append("No setup = no trade." if is_call
                  else "Don't chase knives that already fell.")

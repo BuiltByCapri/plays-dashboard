@@ -109,6 +109,11 @@ class TestQuoteLiquidity(unittest.TestCase):
     def test_tight_spread_does_not_rescue_a_contract_nobody_holds(self):
         self.assertFalse(analysis.quote_is_liquid(0.12, 0.24, 1))
 
+    def test_nan_open_interest_is_rejected(self):
+        # nan < MIN_OPEN_INTEREST is False, so this must be checked explicitly
+        # or a NaN-open-interest quote (a real yfinance shape) slips through.
+        self.assertFalse(analysis.quote_is_liquid(0.40, 0.42, float("nan")))
+
     def test_quote_cost_is_the_mid_per_hundred_shares(self):
         self.assertAlmostEqual(analysis.quote_cost(5.80, 8.10), 695.0)
 
@@ -385,6 +390,24 @@ class TestWeeklyRead(unittest.TestCase):
         _, html = analysis.summarize("call", results)
         self.assertEqual(html.count("SOUN"), 1)
         self.assertIn("ODD", html)
+
+    def test_stale_name_gets_a_note_about_its_earlier_verdict(self):
+        results = [result("SOUN", "go", "clean_setup", "Looks solid")]
+        _, html = analysis.summarize("call", results, stale=["ODD"])
+        self.assertIn("ODD", html)
+        self.assertIn("didn't refresh today", html)
+
+    def test_multiple_stale_names_use_plural_pronoun(self):
+        results = [result("SOUN", "go", "clean_setup", "Looks solid")]
+        _, html = analysis.summarize("call", results, stale=["ODD", "AI"])
+        self.assertIn("ODD", html)
+        self.assertIn("AI", html)
+        self.assertIn("their rating", html)
+
+    def test_no_stale_note_when_nothing_is_stale(self):
+        results = [result("SOUN", "go", "clean_setup", "Looks solid")]
+        _, html = analysis.summarize("call", results)
+        self.assertNotIn("didn't refresh today", html)
 
 
 class TestSnapshotIntegration(unittest.TestCase):
