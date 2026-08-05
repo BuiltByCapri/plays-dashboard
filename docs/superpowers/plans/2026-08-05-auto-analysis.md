@@ -1231,46 +1231,102 @@ git commit -m "feat: generate verdicts, why text, and weekly read on every refre
 - Consumes: the `reads` key written by Task 5.
 - Produces: nothing downstream.
 
-The hardcoded text stays as a fallback so an older `data.json` — or a fetch that lands
-mid-deploy — still renders something rather than `undefined`.
+**The hardcoded copy is deleted outright, not kept as a fallback.** It contains
+`watch $8.65`, a June price level, which collides with the Global Constraint that no
+price level may live in a template literal — keeping it would preserve in `index.html`
+exactly the bug this change exists to remove. When `reads` is absent the page shows a
+visible error state instead, so a refresh that silently stopped running is noticed and
+fixed rather than papered over with plausible-looking stale text. (Maintainer's ruling,
+2026-08-05.)
 
-- [ ] **Step 1: Turn the const into a mutable fallback**
+- [ ] **Step 1: Replace the hardcoded const with an empty holder**
 
-Change `index.html:166` from `const READS={` to `let READS={`, leaving the existing
-call/put text in place as the fallback. The block becomes:
+Replace the whole `READS` block at `index.html:166-169` with:
 
 ```javascript
-let READS={
-  call:["This week · calls","<b>Quiet for longs.</b> Most names faded or kept falling — nothing's a clean call. SOUN broke down, ELF/ODD bounced off lows, HIMS &amp; AI are mid-range and drifting. No setup = no trade."],
-  put:["This week · puts","<b>Puts were the play last week</b> as everything bled — but the easy down-moves are mostly spent now. SOUN's washed out, ELF &amp; ODD already bounced. <b>AI</b> is the only fresh-ish short lean (watch $8.65). Don't chase knives that already fell."]
-};
+let READS=null;   // populated from data.json; null renders the error state below
 ```
 
-- [ ] **Step 2: Read `reads` in the fetch handler**
+- [ ] **Step 2: Add the error-state styling**
+
+The read block currently has one look. Add a variant that is unmistakably not a normal
+read. Immediately after the `.read{...}` rule in the `<style>` block, add:
+
+```css
+  .read.err{background:var(--skip-bg);border-color:var(--skip-line)}
+  .read.err .lab{color:var(--skip)}
+```
+
+- [ ] **Step 3: Render the read or the error in setDir**
+
+In `setDir(dir)`, replace these two lines:
+
+```javascript
+  document.getElementById('readlab').textContent=READS[dir][0];
+  document.getElementById('readtxt').innerHTML=READS[dir][1];
+```
+
+with:
+
+```javascript
+  const rd=READS&&READS[dir], block=document.querySelector('.read');
+  block.classList.toggle('err',!rd);
+  document.getElementById('readlab').textContent=rd?rd[0]:'This week · '+(dir==='call'?'calls':'puts');
+  document.getElementById('readtxt').innerHTML=rd?rd[1]
+    :"<b>This week's read didn't load.</b> The morning refresh may not have run — check the Refresh prices action on GitHub. Prices and verdicts below may be stale too.";
+```
+
+- [ ] **Step 4: Read `reads` in the fetch handler**
 
 In the `.then(p=>{...})` block at `index.html:289`, immediately after the
 `NAMES=p.names;` line, add:
 
 ```javascript
-  if(p.reads&&p.reads.call&&p.reads.put) READS=p.reads;   // generated; falls back if absent
+  if(p.reads&&p.reads.call&&p.reads.put) READS=p.reads;
 ```
 
-- [ ] **Step 3: Verify in a browser**
+- [ ] **Step 5: Verify both states in a browser**
 
 ```bash
 python3 -m http.server 8765 --directory .
 ```
 
-Open `http://localhost:8765/`. Confirm:
-- The "This week · calls" text matches `reads.call[1]` in `data.json`, not the fallback.
+Open `http://localhost:8765/`. Confirm the healthy state:
+- The "This week · calls" text matches `reads.call[1]` in `data.json` exactly.
 - Toggling to Puts swaps to `reads.put[1]`.
+- The read block has its normal background — no error styling.
 - Each card's "Why this call rating" expands and shows the generated read, with prices
   matching the card's own displayed price.
 - The as-of line and "analysis refreshed" line show the same date.
 
-Stop the server with Ctrl-C.
+Then confirm the error state actually fires:
 
-- [ ] **Step 4: Commit**
+```bash
+python3 -c "
+import json
+d = json.load(open('data.json'))
+d.pop('reads', None)
+json.dump(d, open('/tmp/data-noreads.json','w'), ensure_ascii=False, indent=2)
+"
+cp data.json /tmp/data-backup.json && cp /tmp/data-noreads.json data.json
+```
+
+Reload. Confirm the read block turns red-tinted and shows the "didn't load" message on
+both Calls and Puts, and that the cards below still render. Then restore:
+
+```bash
+cp /tmp/data-backup.json data.json
+```
+
+Reload once more and confirm the normal read is back. Stop the server with Ctrl-C.
+
+Verify the restore took — the file must be byte-identical to what Task 5 committed:
+
+```bash
+git diff --exit-code data.json && echo "data.json restored cleanly"
+```
+
+- [ ] **Step 6: Commit**
 
 ```bash
 git add index.html
