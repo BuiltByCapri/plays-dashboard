@@ -102,6 +102,13 @@ class TestQuoteLiquidity(unittest.TestCase):
         self.assertFalse(analysis.quote_is_liquid(0.0, 0.42, 7929))
         self.assertFalse(analysis.quote_is_liquid(0.50, 0.40, 7929))
 
+    def test_cheap_option_with_wide_ratio_but_tight_spread_is_trusted(self):
+        # AI 2-day ATM: 67% relative spread, but 12 cents wide on 6340 open interest
+        self.assertTrue(analysis.quote_is_liquid(0.12, 0.24, 6340))
+
+    def test_tight_spread_does_not_rescue_a_contract_nobody_holds(self):
+        self.assertFalse(analysis.quote_is_liquid(0.12, 0.24, 1))
+
     def test_quote_cost_is_the_mid_per_hundred_shares(self):
         self.assertAlmostEqual(analysis.quote_cost(5.80, 8.10), 695.0)
 

@@ -21,6 +21,8 @@ BUDGET_MULTIPLE = 3.0     # over this multiple of budget, a name is "Track only"
 RICH_IV_MULTIPLE = 1.35   # implied over realized by this much = rich premium
 MIN_OPEN_INTEREST = 10    # below this, an option quote is a dead market
 MAX_SPREAD_RATIO = 0.5    # (ask-bid)/mid above this means the quote isn't trustworthy
+MAX_ABS_SPREAD = 0.15     # cents-wide spreads are tick artifacts on cheap options,
+                          # not evidence of a dead market
 
 VOL_FLOOR = 0.1           # annualized; guards flat/degenerate series
 
@@ -137,6 +139,15 @@ def quote_is_liquid(bid, ask, open_interest):
     Liquidity, not the level of implied vol, is what separates a real elevated
     quote from a bad fill. Short-dated IV structurally runs far above 20-day
     realized vol for legitimate reasons, so comparing the two measures nothing.
+
+    Open interest is a hard gate: below MIN_OPEN_INTEREST a quote is a dead
+    market no matter how tight it looks (a stale quote with nobody in it). Above
+    that floor, the spread just needs to be tight by *either* measure: a small
+    ratio to the mid (MAX_SPREAD_RATIO), or a small number of cents
+    (MAX_ABS_SPREAD). The ratio alone would reject a 12-cent spread on an
+    18-cent option as "67% wide" even with thousands of contracts open — that's
+    a one-cent-tick artifact of a cheap contract, not a bad fill, and the
+    absolute-cents test catches it.
     """
     if open_interest is None or open_interest < MIN_OPEN_INTEREST:
         return False
@@ -145,7 +156,8 @@ def quote_is_liquid(bid, ask, open_interest):
     mid = (bid + ask) / 2.0
     if mid <= 0:
         return False
-    return (ask - bid) / mid <= MAX_SPREAD_RATIO
+    spread = ask - bid
+    return (spread / mid <= MAX_SPREAD_RATIO) or (spread <= MAX_ABS_SPREAD)
 
 
 def quote_cost(bid, ask):
