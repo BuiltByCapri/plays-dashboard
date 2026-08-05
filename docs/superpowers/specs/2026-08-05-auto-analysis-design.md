@@ -158,14 +158,45 @@ a name whose history fetch failed keeps both its old price and its old verdict, 
 
 ## Known data-quality issue
 
-yfinance implied vol is unreliable on illiquid strikes. HIMS currently reports 129% IV
-against a far lower realized vol — almost certainly a bad fill, not a real market price.
-`atm_iv` already band-checks `0.1 < iv < 4.0`, which is too loose to catch this.
+yfinance implied vol is unreliable on illiquid strikes, and a bad reading does real
+damage: `index.html` feeds `ivNear`/`ivFar` straight into the Black-Scholes fair value
+the analyzer shows the user, and the budget gate prices its contract off the same
+number. `atm_iv`'s `0.1 < iv < 4.0` band is far too loose to catch it.
 
-Tighten it: reject an implied vol that sits implausibly far from the name's own realized
-vol and fall back to realized. This matters beyond the verdicts — `index.html` feeds
-`ivNear`/`ivFar` straight into the Black-Scholes fair-value the analyzer shows the user,
-so a garbage IV currently produces a garbage "fair ≈ $X" on screen.
+**Superseded approach (2026-08-05).** The original design rejected an implied vol
+sitting more than `IV_SANITY_MULTIPLE` above the name's own realized vol. Task 5's
+calibration run disproved the mechanism on live data — it failed in both directions
+simultaneously:
+
+```
+SOUN  dte=2  iv=190%  vol=5563  oi=7929  bid=0.40 ask=0.42   -> DISCARDED (wrongly)
+ODD   dte=2  iv=172%  vol=1     oi=1     bid=0.30 ask=1.80   -> KEPT      (wrongly)
+ELF   dte=2  iv=217%  vol=7     oi=93    bid=5.80 ask=8.10   -> DISCARDED (wrongly)
+```
+
+SOUN's reading is liquid and real — 5,563 contracts traded on a 2-cent spread — and was
+thrown away. ODD's is a dead market whose spread is wider than its own bid, and it
+passed. The ratio measures the wrong thing: short-dated implied vol structurally runs
+far above 20-day realized vol for legitimate reasons (event risk, gamma near expiry),
+so no value of the constant separates a real elevated quote from a bad fill.
+
+The downstream cost was concrete. Discarding ELF's real 217% IV and substituting 54%
+realized vol priced its 2-day ATM call at $156 instead of $572 — under the $300 budget
+gate — so a name whose contracts genuinely cost $580–810 was published as a tradeable
+`wait / breakout_pending` call. The hand-written data had it right as "Track only".
+
+**Current approach.** Two changes, both using data already present in the option chain:
+
+1. **The budget gate prices off the real quote, not a model.** "Can I afford this
+   contract" is a question about what it actually costs, so it is answered by the quoted
+   mid — `(bid + ask) / 2 × 100` — falling back to Black-Scholes only when no usable
+   quote exists.
+2. **IV sanity is judged on liquidity, not on a vol ratio.** A reading is discarded when
+   its quote is dead: open interest below `MIN_OPEN_INTEREST`, or a bid/ask spread wider
+   than `MAX_SPREAD_RATIO` of the mid. Against the table above this keeps SOUN (5%
+   spread) and ELF (33%), and discards ODD (143%) — the intended outcome in all three.
+
+The absolute `0.1 < iv < 4.0` band stays as a backstop.
 
 ## Constants
 
@@ -178,16 +209,22 @@ derived facts:
   ELF's near-dated ATM costs $597 (6× budget, muted) while HIMS costs $240 (2.4×, still
   tradeable). This is a fitted threshold, not a derived one.
 - `RICH_IV_MULTIPLE = 1.35` — how far implied must exceed realized before the premium
-  counts as rich and a `go` is downgraded.
-- `IV_SANITY_MULTIPLE = 2.5` — how far implied may exceed realized before it is treated
-  as a bad fill and discarded in favour of realized.
+  counts as rich and a `go` is downgraded. Still a starting value, not a measured one.
+  It is a *judgment* about price, not a data-quality filter, so the failure that killed
+  `IV_SANITY_MULTIPLE` does not apply to it — but it has not been validated either.
+- `MIN_OPEN_INTEREST = 10` — below this, an option quote is a dead market and its
+  implied vol is not trusted. Discards ODD's oi=1 fill; keeps ELF's oi=93.
+- `MAX_SPREAD_RATIO = 0.5` — a bid/ask spread wider than half the mid means the quote
+  is untrustworthy. Discards ODD (143% of mid); keeps SOUN (5%) and ELF (33%).
 
-The two IV multiples are starting values, not measured ones. Implementation calibrates
-them against the five names' actual realized vol — the check being that the sanity
-multiple catches HIMS's current 129% reading without discarding legitimately high vol on
-SOUN, which is a genuinely volatile small cap rather than a bad fill. If no single
-threshold separates those two cases, the spec is wrong about the mechanism and the
-comparison needs to be against the name's own vol history rather than a flat multiple.
+`IV_SANITY_MULTIPLE` is **removed**. See the data-quality section above for why the
+mechanism it implemented was wrong rather than merely mistuned.
+
+Both liquidity thresholds are fitted to a single day's observation of five names. They
+separate the three cases seen on 2026-08-05 cleanly, with ELF's 33% spread the closest
+call — a name quoting wider than that on a quiet day would be discarded where it
+probably should not be. They are worth revisiting once the daily runs have accumulated
+enough history to see the normal spread range per name.
 
 ## Testing
 
