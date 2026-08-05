@@ -1,4 +1,5 @@
 import math
+import re
 import unittest
 
 import analysis
@@ -188,6 +189,78 @@ class TestVerdicts(unittest.TestCase):
                     d = analysis.decide(direction, snap(pos=pos, rsi=r))
                     self.assertIn(d.verdict, allowed)
                     self.assertTrue(0 < len(d.vlabel) <= 12, d.vlabel)
+
+
+class TestProse(unittest.TestCase):
+    def test_render_returns_two_tagged_pairs(self):
+        d = analysis.decide("call", snap())
+        why = analysis.render("call", d, snap())
+        self.assertEqual(len(why), 2)
+        self.assertEqual(why[0][0], "The read")
+        self.assertEqual(why[1][0], "Watch for")
+        for _, text in why:
+            self.assertTrue(text.strip())
+
+    def test_every_rule_has_a_template_that_renders(self):
+        cases = [
+            ("call", "over_budget"), ("call", "extended"), ("call", "no_base"),
+            ("call", "clean_setup"), ("call", "breakout_pending"), ("call", "chop"),
+            ("put", "over_budget"), ("put", "washed_out"), ("put", "breakdown"),
+            ("put", "no_short_edge"), ("put", "chop"),
+        ]
+        for direction, rule_id in cases:
+            d = analysis.Decision("wait", "Watch", rule_id, None)
+            why = analysis.render(direction, d, snap())
+            self.assertEqual(len(why), 2, (direction, rule_id))
+            for _, text in why:
+                self.assertNotIn("{", text, (direction, rule_id))
+
+    def test_overlay_replaces_the_watch_line(self):
+        s = snap(spot=11.0, sma20=10.5, sma50=10.0, pos=70.0, rsi=60.0, iv=1.6, rvol=0.8)
+        d = analysis.decide("call", s)
+        why = analysis.render("call", d, s)
+        self.assertIn("rich", why[1][1].lower())
+
+    def test_templates_contain_no_hardcoded_price_levels(self):
+        """Every price and measured value in the output must come from the snapshot.
+
+        Strip the {placeholders} out of each template; whatever survives is the
+        literal copy. Literal copy may not contain a dollar-prefixed number or a
+        decimal — those are prices and measurements, and freezing one into copy is
+        exactly how the hand-written June text ended up still citing $7.85 months
+        later.
+
+        Bare integers are allowed, because window sizes ("the 20-day high") are
+        properties of the model rather than of any particular day's data.
+        """
+        placeholder = re.compile(r"\{[^}]*\}")
+        banned = [
+            (re.compile(r"\$\s*\d"), "hardcoded dollar amount"),
+            (re.compile(r"\d+\.\d"), "hardcoded decimal value"),
+        ]
+        templates = []
+        for pair in analysis.TEMPLATES.values():
+            templates.extend(pair)
+        templates.extend(analysis.OVERLAY_TEMPLATES.values())
+        for text in templates:
+            literal = placeholder.sub("", text)
+            for pattern, why in banned:
+                self.assertIsNone(pattern.search(literal),
+                                  "%s in template: %r" % (why, text))
+
+    def test_rendered_prose_reflects_the_actual_snapshot(self):
+        s = snap(spot=9.0, sma20=10.0, sma50=11.0, pos=15.0, rsi=35.0)
+        d = analysis.decide("call", s)
+        why = analysis.render("call", d, s)
+        blob = why[0][1] + why[1][1]
+        self.assertIn("10.00", blob)   # the real sma20, not a frozen level
+
+    def test_ampersands_are_escaped(self):
+        bare = re.compile(r"&(?!amp;|lt;|gt;|#)")
+        for pair in analysis.TEMPLATES.values():
+            for text in pair:
+                self.assertIsNone(bare.search(text),
+                                  "unescaped & in template: %r" % text)
 
 
 if __name__ == "__main__":

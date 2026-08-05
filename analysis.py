@@ -188,3 +188,108 @@ def decide(direction, snap):
     if d.verdict == "go" and _iv_is_rich(snap):
         return Decision("wait", "Rich", d.rule_id, "rich_iv")
     return d
+
+
+# --- 3. prose --------------------------------------------------------------
+# Every number is a {placeholder} filled from the snapshot. Literal digits are
+# banned here and a test enforces it: a hardcoded level goes stale the moment
+# the price moves, which is the bug this whole module exists to kill.
+TEMPLATES = {
+    ("call", "over_budget"): (
+        "An ATM contract runs about <b>${cost:.0f}</b> — {mult:.1f}× the ${budget:.0f} "
+        "you're working with. The setup doesn't matter if you can't buy it.",
+        "Tracking only. Shares or a spread are the way in here, not a straight call.",
+    ),
+    ("call", "extended"): (
+        "Ripped to <b>{pos:.0f}%</b> of its 20-day range with RSI at {rsi:.0f}. "
+        "That's the top of a move, not the start of one.",
+        "Chasing here is how you buy the high. Let it cool back toward ${sma20:.2f} "
+        "before you look again.",
+    ),
+    ("call", "no_base"): (
+        "Under both averages (${sma20:.2f} / ${sma50:.2f}) and sitting at "
+        "<b>{pos:.0f}%</b> of its range, RSI {rsi:.0f}. Still falling, no buyer "
+        "showing up yet.",
+        "A real base plus a reclaim of ${sma20:.2f} on volume. Not yet — don't catch it.",
+    ),
+    ("call", "clean_setup"): (
+        "Above the 20-day (${sma20:.2f}) with the longer trend behind it, "
+        "<b>{pos:.0f}%</b> of range, RSI {rsi:.0f}. That's a real setup, not a hope.",
+        "Wants to hold ${sma20:.2f}. Lose that and the setup's void — that's your line, "
+        "not a feeling.",
+    ),
+    ("call", "breakout_pending"): (
+        "Pressing the 20-day high at <b>${hi20:.2f}</b>, about {dist_hi:.1f}% away, "
+        "with the trend up and RSI {rsi:.0f}. Coiled, not broken out.",
+        "Take the break of ${hi20:.2f} on volume — not the anticipation of it.",
+    ),
+    ("call", "chop"): (
+        "Mid-range at <b>{pos:.0f}%</b> between ${lo20:.2f} and ${hi20:.2f}, "
+        "RSI {rsi:.0f}. Drifting, no momentum either way.",
+        "A clean break of ${hi20:.2f} would start something. Until then, "
+        "no setup = no trade.",
+    ),
+    ("put", "over_budget"): (
+        "An ATM put runs about <b>${cost:.0f}</b> — {mult:.1f}× the ${budget:.0f} "
+        "you're working with. Can't express it at this size.",
+        "Tracking only. Nothing to do on the short side at this price.",
+    ),
+    ("put", "washed_out"): (
+        "Already down at <b>{pos:.0f}%</b> of its 20-day range with RSI {rsi:.0f}. "
+        "Puts were the trade getting here — the easy down-money is spent.",
+        "A failed bounce into ${sma20:.2f} is a cleaner short than chasing fresh lows. "
+        "Shorting down here is late.",
+    ),
+    ("put", "breakdown"): (
+        "Under both averages (${sma20:.2f} / ${sma50:.2f}) at <b>{pos:.0f}%</b> of "
+        "range, RSI {rsi:.0f}. Breaking down with room left toward ${lo20:.2f}.",
+        "Void if it reclaims ${sma20:.2f}. That's the stop — set it before you're in, "
+        "not after.",
+    ),
+    ("put", "no_short_edge"): (
+        "Above both averages (${sma20:.2f} / ${sma50:.2f}) and {chg_1mo:+.1f}% on the "
+        "month. Shorting strength is how you get run over.",
+        "It has to lose ${sma20:.2f} first. No short edge until then.",
+    ),
+    ("put", "chop"): (
+        "Mid-range at <b>{pos:.0f}%</b> between ${lo20:.2f} and ${hi20:.2f} — "
+        "two-sided, not breaking down.",
+        "No clean put edge here. A break of ${lo20:.2f} would change that.",
+    ),
+}
+
+OVERLAY_TEMPLATES = {
+    "rich_iv": (
+        "One catch: premium's running about {iv:.0f}% against {rvol:.0f}% realized, so "
+        "you'd be paying up for the move. Right idea, rich price — wait for vol to cool "
+        "or spread it off.",
+    )[0],
+}
+
+
+def _prose_values(direction, snap):
+    """Snapshot values plus the few derived numbers the templates reference."""
+    hi20 = snap["hi20"] or 0.0
+    cost = cost_for(direction, snap)
+    values = dict(snap)
+    values.update(
+        cost=cost,
+        mult=cost / BUDGET if BUDGET else 0.0,
+        budget=BUDGET,
+        dist_hi=((hi20 - snap["spot"]) / hi20 * 100.0) if hi20 > 0 else 0.0,
+        iv=(snap.get("iv") or 0.0) * 100.0,
+        rvol=(snap.get("rvol") or 0.0) * 100.0,
+    )
+    return values
+
+
+def render(direction, decision, snap):
+    """Build the two [tag, html] pairs for one name in one direction."""
+    read_t, watch_t = TEMPLATES[(direction, decision.rule_id)]
+    values = _prose_values(direction, snap)
+    if decision.overlay:
+        watch_t = OVERLAY_TEMPLATES[decision.overlay]
+    return [
+        ["The read", read_t.format(**values)],
+        ["Watch for", watch_t.format(**values)],
+    ]
