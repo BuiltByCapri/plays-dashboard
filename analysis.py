@@ -299,3 +299,58 @@ def render(direction, decision, snap):
         ["The read", read_t.format(**values)],
         ["Watch for", watch_t.format(**values)],
     ]
+
+
+# --- 4. the weekly read ----------------------------------------------------
+def _join(syms):
+    """'A', 'A & B', or 'A, B & C' — Oxford-free, HTML-escaped."""
+    if not syms:
+        return ""
+    if len(syms) == 1:
+        return syms[0]
+    return ", ".join(syms[:-1]) + " &amp; " + syms[-1]
+
+
+def summarize(direction, results):
+    """Assemble the week's read for one direction from all five verdicts."""
+    is_call = direction == "call"
+    label = "This week · " + ("calls" if is_call else "puts")
+    word = "call" if is_call else "put"
+    side = "longs" if is_call else "shorts"
+
+    if not results:
+        return [label, "<b>Nothing tracked.</b> No names on the board this week."]
+
+    def syms(verdict):
+        return [r["sym"] for r in results if r["decision"].verdict == verdict]
+
+    go, wait, skip, mute = syms("go"), syms("wait"), syms("skip"), syms("mute")
+    rich = [r["sym"] for r in results if r["decision"].overlay == "rich_iv"]
+
+    parts = []
+    if go:
+        parts.append("<b>%s %s the clean %s%s.</b>" % (
+            _join(go), "is" if len(go) == 1 else "are", word,
+            "" if len(go) == 1 else "s"))
+    else:
+        parts.append("<b>Quiet for %s.</b> Nothing's a clean %s right now." % (side, word))
+
+    if rich:
+        parts.append("%s %s the setup but the premium's rich — right idea, wrong price." % (
+            _join(rich), "has" if len(rich) == 1 else "have"))
+
+    if skip:
+        parts.append("%s %s no edge on this side." % (
+            _join(skip), "has" if len(skip) == 1 else "have"))
+
+    if wait and not go:
+        parts.append("%s %s worth watching, not buying." % (
+            _join(wait), "is" if len(wait) == 1 else "are"))
+
+    if mute:
+        parts.append("%s %s priced past the $%.0f budget — tracking only." % (
+            _join(mute), "is" if len(mute) == 1 else "are", BUDGET))
+
+    parts.append("No setup = no trade." if is_call
+                 else "Don't chase knives that already fell.")
+    return [label, " ".join(parts)]

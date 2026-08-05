@@ -272,5 +272,52 @@ class TestProse(unittest.TestCase):
         self.assertNotIn("{", why[0][1] + why[1][1])
 
 
+def result(sym, verdict, rule_id="chop", vlabel="Watch", overlay=None):
+    return {"sym": sym, "decision": analysis.Decision(verdict, vlabel, rule_id, overlay)}
+
+
+class TestWeeklyRead(unittest.TestCase):
+    def test_label_names_the_direction(self):
+        self.assertEqual(analysis.summarize("call", [result("A", "wait")])[0],
+                         "This week · calls")
+        self.assertEqual(analysis.summarize("put", [result("A", "wait")])[0],
+                         "This week · puts")
+
+    def test_green_names_are_called_out_by_ticker(self):
+        results = [result("SOUN", "go", "clean_setup"), result("HIMS", "wait")]
+        _, html = analysis.summarize("call", results)
+        self.assertIn("SOUN", html)
+
+    def test_all_quiet_says_no_setup(self):
+        results = [result(s, "wait") for s in ("A", "B", "C")]
+        _, html = analysis.summarize("call", results)
+        self.assertIn("no", html.lower())
+        self.assertNotIn("None", html)
+
+    def test_all_skip_reads_as_stand_down(self):
+        results = [result(s, "skip", "no_short_edge", "Skip") for s in ("A", "B", "C")]
+        _, html = analysis.summarize("put", results)
+        self.assertTrue(html.strip())
+        self.assertNotIn("{", html)
+
+    def test_muted_names_are_reported_as_out_of_budget(self):
+        results = [result("ELF", "mute", "over_budget", "Track only"), result("AI", "wait")]
+        _, html = analysis.summarize("call", results)
+        self.assertIn("ELF", html)
+
+    def test_handles_an_empty_result_set(self):
+        label, html = analysis.summarize("call", [])
+        self.assertTrue(label)
+        self.assertTrue(html.strip())
+
+    def test_output_has_no_unescaped_ampersand_or_stray_braces(self):
+        results = [result("SOUN", "go", "clean_setup"), result("ELF", "mute", "over_budget"),
+                   result("AI", "skip", "extended"), result("ODD", "wait")]
+        for direction in ("call", "put"):
+            _, html = analysis.summarize(direction, results)
+            self.assertNotIn("{", html)
+            self.assertIsNone(re.search(r"&(?!amp;|lt;|gt;|#)", html))
+
+
 if __name__ == "__main__":
     unittest.main()
