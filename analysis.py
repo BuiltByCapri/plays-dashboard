@@ -34,8 +34,10 @@ def sma(series, n):
 def rsi(series, n=14):
     """RSI over the last n periods, using simple (not Wilder-smoothed) averages.
 
-    Returns 0-100, or None if the series is too short. 100 when there are no
-    losses in the window, 0 when there are no gains.
+    Returns 0-100, or None if the series is too short. Three cases:
+    - 50.0 when there is no movement in either direction (flat series)
+    - 100.0 when there are gains but no losses (uptrend)
+    - 0.0 when there are losses but no gains (downtrend)
     """
     if len(series) < n + 1:
         return None
@@ -47,6 +49,8 @@ def rsi(series, n=14):
             gains += delta
         else:
             losses -= delta
+    if gains == 0 and losses == 0:
+        return 50.0
     if losses == 0:
         return 100.0
     if gains == 0:

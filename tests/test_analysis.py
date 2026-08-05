@@ -24,6 +24,10 @@ class TestIndicators(unittest.TestCase):
     def test_rsi_none_when_series_too_short(self):
         self.assertIsNone(analysis.rsi([1.0, 2.0, 3.0], 14))
 
+    def test_rsi_flat_series_is_neutral(self):
+        """A directionless series is neutral, not overbought."""
+        self.assertAlmostEqual(analysis.rsi([10.0] * 30, 14), 50.0)
+
     def test_range_position_at_high_is_100(self):
         series = [float(i) for i in range(1, 21)]
         self.assertAlmostEqual(analysis.range_position(series, 20), 100.0)
