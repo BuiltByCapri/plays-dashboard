@@ -191,10 +191,17 @@ gate — so a name whose contracts genuinely cost $580–810 was published as a 
    contract" is a question about what it actually costs, so it is answered by the quoted
    mid — `(bid + ask) / 2 × 100` — falling back to Black-Scholes only when no usable
    quote exists.
-2. **IV sanity is judged on liquidity, not on a vol ratio.** A reading is discarded when
-   its quote is dead: open interest below `MIN_OPEN_INTEREST`, or a bid/ask spread wider
-   than `MAX_SPREAD_RATIO` of the mid. Against the table above this keeps SOUN (5%
-   spread) and ELF (33%), and discards ODD (143%) — the intended outcome in all three.
+2. **IV sanity is judged on liquidity, not on a vol ratio.** Open interest below
+   `MIN_OPEN_INTEREST` rejects the quote outright. Past that gate, a quote is trusted
+   when its spread is either a small fraction of the mid (`MAX_SPREAD_RATIO`) *or*
+   absolutely narrow (`MAX_ABS_SPREAD`). Against the table above this keeps SOUN (5%
+   spread) and ELF (33%) and discards ODD (rejected on open interest).
+
+   The absolute-spread path exists because relative spread systematically penalizes
+   cheap options. AI's near-dated call quoted $0.12/$0.24 on 6,340 open interest — a 67%
+   spread that is a one-cent-tick artifact, not a dead market. Open interest stays a hard
+   gate ahead of both paths, so an absolutely tight spread cannot rescue a contract
+   nobody holds.
 
 The absolute `0.1 < iv < 4.0` band stays as a backstop.
 
@@ -215,7 +222,10 @@ derived facts:
 - `MIN_OPEN_INTEREST = 10` — below this, an option quote is a dead market and its
   implied vol is not trusted. Discards ODD's oi=1 fill; keeps ELF's oi=93.
 - `MAX_SPREAD_RATIO = 0.5` — a bid/ask spread wider than half the mid means the quote
-  is untrustworthy. Discards ODD (143% of mid); keeps SOUN (5%) and ELF (33%).
+  is untrustworthy. Keeps SOUN (5%) and ELF (33%).
+- `MAX_ABS_SPREAD = 0.15` — an escape from the ratio test for cheap options, where a
+  cents-wide spread is a tick artifact rather than a dead market. Keeps AI's
+  $0.12/$0.24 quote on 6,340 open interest, which the ratio test alone rejected at 67%.
 
 `IV_SANITY_MULTIPLE` is **removed**. See the data-quality section above for why the
 mechanism it implemented was wrong rather than merely mistuned.
