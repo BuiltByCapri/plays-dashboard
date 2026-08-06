@@ -42,6 +42,8 @@
   .toggle button .ar{font-size:12px}
 
   .read{margin:12px 0 6px;padding:16px 18px;background:var(--paper-2);border:1px solid var(--line);border-radius:16px;position:relative;overflow:hidden}
+  .read.err{background:var(--skip-bg);border-color:var(--skip-line)}
+  .read.err .lab{color:var(--skip)}
   .read::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--wait)}
   .read .lab{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--wait)}
   .read p{font-size:14.5px;margin-top:5px}.read b{font-weight:600}
@@ -163,10 +165,7 @@ const FRIS=fridays(7);
 const SHORT=FRIS[0];                                   // this/next Friday
 let MONTHLY=FRIS[0];for(const f of FRIS){if(Math.abs(dteOf(f)-30)<Math.abs(dteOf(MONTHLY)-30))MONTHLY=f;}
 
-const READS={
-  call:["This week · calls","<b>Quiet for longs.</b> Most names faded or kept falling — nothing's a clean call. SOUN broke down, ELF/ODD bounced off lows, HIMS &amp; AI are mid-range and drifting. No setup = no trade."],
-  put:["This week · puts","<b>Puts were the play last week</b> as everything bled — but the easy down-moves are mostly spent now. SOUN's washed out, ELF &amp; ODD already bounced. <b>AI</b> is the only fresh-ish short lean (watch $8.65). Don't chase knives that already fell."]
-};
+let READS=null;   // populated from data.json; null renders the error state below
 
 let DIR='call', NAMES=[];
 const TV={SOUN:'NASDAQ:SOUN',HIMS:'NYSE:HIMS',AI:'NYSE:AI',ODD:'NASDAQ:ODD',ELF:'NYSE:ELF'};
@@ -279,8 +278,11 @@ function setDir(dir){
   DIR=dir;
   document.getElementById('toggle').classList.toggle('puts',dir==='put');
   document.querySelectorAll('#toggle button').forEach(b=>b.classList.toggle('on',b.dataset.dir===dir));
-  document.getElementById('readlab').textContent=READS[dir][0];
-  document.getElementById('readtxt').innerHTML=READS[dir][1];
+  const rd=READS&&READS[dir], block=document.querySelector('.read');
+  block.classList.toggle('err',!rd);
+  document.getElementById('readlab').textContent=rd?rd[0]:'This week · '+(dir==='call'?'calls':'puts');
+  document.getElementById('readtxt').innerHTML=rd?rd[1]
+    :"<b>This week's read didn't load.</b> The morning refresh may not have run — check the Refresh prices action on GitHub. Prices and verdicts below may be stale too.";
   document.getElementById('seclabel').textContent=(dir==='call'?'Long ideas':'Short ideas')+' · your 5 names';
   build();
 }
@@ -290,6 +292,7 @@ fetch('data.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(p=>{
   document.getElementById('asof').textContent='as of '+fmtD(p.updated)+' · close prices';
   const ad=document.getElementById('andate'); if(ad&&p.analysis_date) ad.textContent='analysis refreshed '+fmtD(p.analysis_date);
   NAMES=p.names;
+  if(p.reads&&p.reads.call&&p.reads.put) READS=p.reads;
   NAMES.forEach(d=>{   // prefer fresh IV from the daily refresh; fall back to calibration
     if(typeof d.ivNear!=='number') d.ivNear=calibIV(d.spot,d.anchor.K,d.anchor.dte,d.anchor.prem);
     if(typeof d.ivFar!=='number')  d.ivFar=d.anchorF?calibIV(d.spot,d.anchor.K,d.anchorF.dte,d.anchorF.prem):d.ivNear;
