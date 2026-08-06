@@ -22,6 +22,8 @@ jobs:
           python-version: "3.11"
       - name: Install deps
         run: pip install --quiet yfinance
+      - name: Run analysis tests
+        run: python -m unittest discover -s tests -t . -v
       - name: Refresh data.json
         run: python refresh.py
       - name: Commit if changed
