@@ -242,6 +242,12 @@ def build_snapshot(name, closes, near_dte):
         "iv_far": opt.iv_far,
         "rvol": rvol,
         "near_dte": near_dte,
+        # The expiry date itself, not just its distance in days. A day count is
+        # not a contract identity: it decays every hour the page sits open and
+        # every day the action doesn't run, so a Saturday visitor computing 6
+        # days to the same Friday the job published as 7 would reject a
+        # perfectly valid quote.
+        "near_expiry": opt.expiry,
         "call_cost": _priced("call", opt.call_quote, spot, near_dte, opt.price_iv),
         "put_cost": _priced("put", opt.put_quote, spot, near_dte, opt.price_iv),
         # Whether each cost above is a real quoted mid or a Black-Scholes
@@ -270,6 +276,9 @@ def apply_snapshot(name, snap):
     # the same number for the same contract instead of the page re-deriving its
     # own Black-Scholes price beside the quoted one.
     name["near"] = {
+        # `expiry` is what decides whether the quote still applies; `dte` is
+        # display only and goes stale between runs.
+        "expiry": snap["near_expiry"],
         "dte": snap["near_dte"],
         "call_cost": round(snap["call_cost"], 2),
         "put_cost": round(snap["put_cost"], 2),

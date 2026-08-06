@@ -179,11 +179,17 @@ function ivFor(d,dte){const iv=dte<=20?d.ivNear:d.ivFar;return (typeof iv==='num
 
 // The near row prefers the cost refresh.py actually quoted for that expiry, so
 // this row and the "why" text can't print two prices for the same contract.
-// Only when the published expiry still matches the Friday this page computed —
-// otherwise the quote belongs to an expiry that has since passed.
-function nearCost(d,dte){
+// Matched on the expiry DATE, never on a day count: the job runs weekdays at
+// 13:30 UTC, so a Friday run publishes dte 7 for a contract a Saturday visitor
+// computes as 6 days out — same contract, and rejecting it would put a modelled
+// price back on the card beside the quoted one in the prose. Formatted from the
+// local date parts rather than any UTC serialization, which would shift the day
+// for anyone west of UTC on a Date built at local noon.
+function isoLocal(dt){const p=n=>(n<10?'0':'')+n;return dt.getFullYear()+'-'+p(dt.getMonth()+1)+'-'+p(dt.getDate());}
+const SHORT_ISO=isoLocal(SHORT);
+function nearCost(d){
   const n=d.near;
-  if(!n||n.dte!==dte) return null;
+  if(!n||n.expiry!==SHORT_ISO) return null;   // a genuinely stale payload
   const cost=n[DIR+'_cost'];
   if(typeof cost!=='number'||!(cost>0)) return null;
   return {cost, quoted: n[DIR+'_quoted']===true};
@@ -192,7 +198,7 @@ function contractsFor(d){
   const K=Math.max(0.5,Math.round(d.spot));
   return [SHORT,MONTHLY].map((f,idx)=>{
     const dte=dteOf(f);
-    const q=idx?null:nearCost(d,dte);
+    const q=idx?null:nearCost(d);
     const cost=q?q.cost:bsPrice(DIR,d.spot,K,dte/365,ivFor(d,dte))*100;
     const prem=cost/100, quoted=!!(q&&q.quoted);
     // A modelled cost gets a muted "est" badge, never a confident fit claim:

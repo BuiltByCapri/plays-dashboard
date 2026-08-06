@@ -120,9 +120,16 @@ Rules are evaluated in order; first match wins.
 | 3 | `no_short_edge` | price > SMA20 > SMA50 | `skip` | Skip |
 | 4 | `chop` | (default) | `skip` | Skip |
 
-**Overlay, applied after the ladder:** when implied vol sits well above the name's own
-3-month realized vol, a `go` is downgraded to `wait` and the prose notes the premium is
-rich. Direction right, price wrong.
+**Overlay, applied after the ladder:** when the ~30-day implied vol sits well above the
+name's own 20-day realized vol, a `go` is downgraded to `wait` and the prose notes the
+premium is rich. Direction right, price wrong.
+
+The term matters. An earlier version compared the *short-dated* implied vol against
+realized, which is the same apples-to-oranges comparison rejected under "Known
+data-quality issue" — a 2-day print structurally exceeds 20-day realized, so volatile
+names could never reach `go`. It was also perverse: a name whose quote was discarded
+fell back to `iv := realized`, giving a ratio of exactly 1.00, so bad data could never
+be flagged as rich.
 
 ### Section 3: prose — rating in, sentences out
 

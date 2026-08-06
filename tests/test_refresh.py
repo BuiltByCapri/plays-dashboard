@@ -119,7 +119,8 @@ def _snap(**kw):
     base = dict(
         sym="ELF", spot=86.37, sma20=79.27, sma50=69.20, rsi=69.3, pos=90.6,
         hi20=87.84, lo20=72.25, chg_1mo=14.6, chg_5d=1.0,
-        iv=0.61, iv_far=0.535, rvol=0.535, near_dte=2,
+        iv=0.61, iv_far=0.535, rvol=0.535,
+        near_dte=2, near_expiry="2026-08-07",
         call_cost=695.0, put_cost=533.0, call_quoted=True, put_quoted=True,
     )
     base.update(kw)
@@ -135,6 +136,7 @@ class TestApplySnapshot(unittest.TestCase):
         """
         name = {"sym": "ELF", "yf": "ELF"}
         refresh.apply_snapshot(name, _snap())
+        self.assertEqual(name["near"]["expiry"], "2026-08-07")
         self.assertEqual(name["near"]["dte"], 2)
         self.assertAlmostEqual(name["near"]["call_cost"], 695.0)
         self.assertAlmostEqual(name["near"]["put_cost"], 533.0)
@@ -186,6 +188,25 @@ class TestPublishedPayload(unittest.TestCase):
             for key in ("call_quoted", "put_quoted"):
                 self.assertIsInstance(near[key], bool, (name["sym"], key))
 
+    def test_every_name_publishes_a_well_formed_iso_expiry(self):
+        """index.html matches the published quote to the contract it is showing
+        by this string, so a malformed one silently un-matches every name."""
+        import datetime
+        for name in self.data["names"]:
+            expiry = name["near"]["expiry"]
+            self.assertIsInstance(expiry, str, name["sym"])
+            parsed = datetime.date.fromisoformat(expiry)   # raises if malformed
+            self.assertEqual(parsed.isoformat(), expiry, name["sym"])
+            self.assertEqual(parsed.weekday(), 4, (name["sym"], expiry))  # a Friday
+
+    def test_the_published_expiry_is_consistent_with_its_day_count(self):
+        import datetime
+        updated = datetime.date.fromisoformat(self.data["updated"])
+        for name in self.data["names"]:
+            near = name["near"]
+            delta = (datetime.date.fromisoformat(near["expiry"]) - updated).days
+            self.assertEqual(delta, near["dte"], name["sym"])
+
     def test_no_frozen_anchors_survive(self):
         for name in self.data["names"]:
             self.assertNotIn("anchor", name, name["sym"])
@@ -212,6 +233,27 @@ class TestPageContract(unittest.TestCase):
         with open(os.path.join(HERE, "index.html")) as f:
             cls.src = f.read()
 
+    def _fn(self, marker):
+        """One function's source, from `marker` to its balancing brace.
+
+        Keeps these assertions off the surrounding comments — a comment that
+        merely *names* the thing being avoided shouldn't fail the test that
+        checks it isn't used.
+        """
+        self.assertIn(marker, self.src)
+        rest = self.src.split(marker, 1)[1]
+        depth, opened, out = 0, False, []
+        for ch in rest:
+            out.append(ch)
+            if ch == "{":
+                depth += 1
+                opened = True
+            elif ch == "}":
+                depth -= 1
+                if opened and depth == 0:
+                    break
+        return "".join(out)
+
     def test_reads_guard_checks_shape_not_just_truthiness(self):
         """A present-but-malformed reads block used to render the literal
         string "undefined" where the week's read belongs."""
@@ -235,7 +277,40 @@ class TestPageContract(unittest.TestCase):
         self.assertIn("function nearCost(", self.src)
         self.assertIn("n[DIR+'_cost']", self.src)
         self.assertIn("n[DIR+'_quoted']===true", self.src)
-        self.assertIn("n.dte!==dte", self.src)   # only for the matching expiry
+
+    def test_the_quote_is_matched_on_expiry_date_not_a_day_count(self):
+        """A day count is not a contract identity.
+
+        The job runs weekdays at 13:30 UTC, so a Friday run publishes dte 7 for
+        an expiry a Saturday visitor computes as 6 days out — the same contract.
+        Comparing day counts rejected that still-valid quote and put a modelled
+        price back on the card beside the quoted one in the prose, every weekend
+        and every US morning before the action runs.
+        """
+        near_cost = self._fn("function nearCost(")
+        self.assertIn("n.expiry!==SHORT_ISO", near_cost)
+        self.assertIn("const SHORT_ISO=isoLocal(SHORT)", self.src)
+        # the day-count comparison must be gone
+        self.assertNotIn("n.dte", near_cost)
+
+    def test_expiry_is_formatted_from_local_date_parts(self):
+        """toISOString() on a Date built at local noon shifts the day for
+        anyone far enough west of UTC, which would silently un-match every
+        quote for those visitors."""
+        iso_local = self._fn("function isoLocal(")
+        self.assertIn("dt.getFullYear()", iso_local)
+        self.assertIn("dt.getMonth()+1", iso_local)
+        self.assertIn("dt.getDate()", iso_local)
+        self.assertNotIn("toISOString", iso_local)
+
+    def test_a_non_matching_expiry_still_falls_back_to_the_muted_estimate(self):
+        """The genuine-mismatch branch must keep blocker 3's safety property:
+        nearCost returns null, contractsFor takes the Black-Scholes path, and
+        `quoted` is false — so the badge is `na`/`est`, never "fits $100"."""
+        self.assertIn("return null", self._fn("function nearCost("))
+        # null from nearCost => model price and quoted=false
+        self.assertIn("const cost=q?q.cost:bsPrice(", self.src)
+        self.assertIn("quoted=!!(q&&q.quoted)", self.src)
 
     def test_unquoted_rows_do_not_claim_a_fit(self):
         """"fits $100" may only appear on a branch gated by `quoted`."""

@@ -55,6 +55,7 @@
       "ivNear": 1.336,
       "ivFar": 1.018,
       "near": {
+        "expiry": "2026-08-07",
         "dte": 2,
         "call_cost": 41.0,
         "put_cost": 49.5,
@@ -115,6 +116,7 @@
       "ivNear": 1.35,
       "ivFar": 0.984,
       "near": {
+        "expiry": "2026-08-07",
         "dte": 2,
         "call_cost": 93.0,
         "put_cost": 75.0,
@@ -175,6 +177,7 @@
       "ivNear": 0.443,
       "ivFar": 0.791,
       "near": {
+        "expiry": "2026-08-07",
         "dte": 2,
         "call_cost": 18.0,
         "put_cost": 26.94,
@@ -235,6 +238,7 @@
       "ivNear": 0.738,
       "ivFar": 0.738,
       "near": {
+        "expiry": "2026-08-07",
         "dte": 2,
         "call_cost": 45.28,
         "put_cost": 22.96,
@@ -295,6 +299,7 @@
       "ivNear": 1.306,
       "ivFar": 0.535,
       "near": {
+        "expiry": "2026-08-07",
         "dte": 2,
         "call_cost": 695.0,
         "put_cost": 657.08,
