@@ -2,7 +2,12 @@ name: Refresh prices
 
 on:
   schedule:
-    - cron: "30 13 * * 1-5"   # 9:30 AM ET (13:30 UTC), weekdays
+    # Every 15 minutes, 13:00-21:59 UTC, weekdays. That window covers US market
+    # hours across both DST regimes (EDT 9:00-17:59, EST 8:00-16:59), so it
+    # runs a bit before open and a bit after close year-round rather than
+    # needing two schedules. GitHub delays scheduled runs under load, so the
+    # actual cadence is looser than 15 minutes in practice.
+    - cron: "*/15 13-21 * * 1-5"
   workflow_dispatch: {}         # allow manual run
 
 permissions:

@@ -311,6 +311,12 @@ def main():
     near_dte = days_to_next_friday(today)
     print("Refreshing (near expiry %dd)..." % near_dte, flush=True)
 
+    # The moment this run actually happened, distinct from `today`/`updated`
+    # (the trading session the data represents). With the job now running
+    # every 15 minutes, several runs share the same `updated` date, and the
+    # page needs the real wall-clock time to say how fresh it is.
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+
     results = {"call": [], "put": []}
     refreshed = 0
     stale = []
@@ -355,12 +361,17 @@ def main():
     }
     data["updated"] = today.isoformat()
     data["analysis_date"] = today.isoformat()
+    # Seconds-precision, timezone-aware UTC timestamp of this run. `updated`
+    # stays the "which trading session" date other code and tests key off;
+    # this is the "how many minutes ago" instant the page renders.
+    data["updated_at"] = now_utc.isoformat(timespec="seconds")
 
     with open(DATA, "w") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
         f.write("\n")
-    print("Done. %d/%d refreshed. updated = analysis_date = %s"
-          % (refreshed, len(data["names"]), data["updated"]), flush=True)
+    print("Done. %d/%d refreshed. updated = analysis_date = %s, updated_at = %s"
+          % (refreshed, len(data["names"]), data["updated"], data["updated_at"]),
+          flush=True)
 
 
 if __name__ == "__main__":

@@ -145,7 +145,7 @@
   <div class="section-label" id="seclabel">Your 5 names</div>
   <div id="cards"></div>
 
-  <footer><b>Heads up:</b> not financial advice — a research aid for your own calls. Prices auto-refresh each morning (delayed); the verdicts + "why" carry their own refresh date. The analyzer estimates fair value with Black–Scholes anchored to real premiums — a guide, not gospel. <b>Calls bet up, puts bet down — same discipline both ways.</b></footer>
+  <footer><b>Heads up:</b> not financial advice — a research aid for your own calls. Prices and verdicts auto-refresh roughly every 15 minutes during market hours (delayed ~15 min); nothing here carries a separate, older date. Mid-session verdicts are provisional — the day's bar is still forming, so a rating can flip before the close as RSI and range position move. The analyzer estimates fair value with Black–Scholes anchored to real premiums — a guide, not gospel. <b>Calls bet up, puts bet down — same discipline both ways.</b></footer>
 </div>
 
 <script>
@@ -171,6 +171,17 @@ let DIR='call', NAMES=[];
 const TV={SOUN:'NASDAQ:SOUN',HIMS:'NYSE:HIMS',AI:'NYSE:AI',ODD:'NASDAQ:ODD',ELF:'NYSE:ELF'};
 const cards=document.getElementById('cards');
 const fmtD=s=>{try{return new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}catch(e){return s;}};
+// Absolute timestamp -> "how long ago", ticking so a tab left open stays honest.
+function relTime(ms){
+  const s=Math.max(0,Math.round(ms/1000));
+  if(s<45) return 'just now';
+  const m=Math.round(s/60);
+  if(m<60) return m+' min ago';
+  const h=Math.round(m/60);
+  if(h<24) return h+(h===1?' hour ago':' hours ago');
+  const d=Math.round(h/24);
+  return d+(d===1?' day ago':' days ago');
+}
 
 // ivNear targets ~8 days and ivFar ~30, matching DISPLAY_IV_DTE/FAR_IV_DTE in
 // refresh.py. Guarded because a legacy payload may carry neither; bsPrice()
@@ -317,8 +328,18 @@ function setDir(dir){
 document.querySelectorAll('#toggle button').forEach(b=>b.addEventListener('click',()=>setDir(b.dataset.dir)));
 
 fetch('data.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(p=>{
-  document.getElementById('asof').textContent='as of '+fmtD(p.updated)+' · close prices';
-  const ad=document.getElementById('andate'); if(ad&&p.analysis_date) ad.textContent='analysis refreshed '+fmtD(p.analysis_date);
+  const updatedMs=p.updated_at?new Date(p.updated_at).getTime():NaN;
+  document.getElementById('asof').textContent=isNaN(updatedMs)
+    ? 'as of '+fmtD(p.updated)+' · close prices'
+    : new Date(updatedMs).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'})+' · delayed ~15 min';
+  const ad=document.getElementById('andate');
+  if(ad&&!isNaN(updatedMs)){
+    const tick=()=>{ad.textContent='updated '+relTime(Date.now()-updatedMs)+' · verdicts move with the session';};
+    tick();
+    setInterval(tick,30000);
+  }else if(ad&&p.analysis_date){
+    ad.textContent='analysis refreshed '+fmtD(p.analysis_date);
+  }
   NAMES=p.names;
   // Truthiness alone isn't enough: a present-but-malformed reads block would
   // render the literal string "undefined" where the week's read belongs, which

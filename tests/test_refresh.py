@@ -212,6 +212,24 @@ class TestPublishedPayload(unittest.TestCase):
             self.assertNotIn("anchor", name, name["sym"])
             self.assertNotIn("anchorF", name, name["sym"])
 
+    def test_updated_at_is_a_timezone_aware_timestamp_matching_updated(self):
+        """The page renders `updated_at` as the exact refresh moment in the
+        viewer's own timezone, so it must be an aware instant (not a naive
+        local time that would shift under conversion) and must land on the
+        same trading-session date as `updated` -- allowing one calendar day
+        of slack, because `updated` is stamped from the *local* system clock
+        (UTC on the GitHub runner, but whatever the host's TZ is for a
+        manual/local run) while `updated_at` is always UTC, and those two
+        can legitimately disagree by a day right around midnight UTC."""
+        import datetime
+        updated_at = self.data["updated_at"]
+        self.assertIsInstance(updated_at, str)
+        parsed = datetime.datetime.fromisoformat(updated_at)
+        self.assertIsNotNone(parsed.tzinfo)
+        parsed_utc = parsed.astimezone(datetime.timezone.utc)
+        updated = datetime.date.fromisoformat(self.data["updated"])
+        self.assertLessEqual(abs((parsed_utc.date() - updated).days), 1)
+
     def test_reads_are_the_two_element_pairs_the_page_expects(self):
         for direction in ("call", "put"):
             read = self.data["reads"][direction]
