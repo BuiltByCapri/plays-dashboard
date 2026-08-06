@@ -10,15 +10,6 @@
       "spot": 6.43,
       "chg": "−3.2% · 1mo",
       "dir": "down",
-      "anchor": {
-        "K": 8,
-        "dte": 8,
-        "prem": 1.01
-      },
-      "anchorF": {
-        "dte": 36,
-        "prem": 1.44
-      },
       "levels": [
         [
           "Support",
@@ -39,11 +30,11 @@
         "why": [
           [
             "The read",
-            "Mid-range at <b>74%</b> between $5.70 and $6.69, RSI 52. Drifting, no momentum either way."
+            "Sitting at <b>74%</b> of its 20-day range, between $5.70 and $6.69, RSI 52. Nothing in the trend, the range or the momentum lines up into a call setup here."
           ],
           [
             "Watch for",
-            "A clean break of $6.69 would start something. Until then, no setup = no trade."
+            "A clean break of $6.69 on volume would start something. Until then, no setup = no trade."
           ]
         ]
       },
@@ -53,16 +44,23 @@
         "why": [
           [
             "The read",
-            "Mid-range at <b>74%</b> between $5.70 and $6.69 — two-sided, not breaking down."
+            "Sitting at <b>74%</b> of its 20-day range, between $5.70 and $6.69, RSI 52. There's no breakdown underway to sell into — the short conditions aren't lining up."
           ],
           [
             "Watch for",
-            "No clean put edge here. A break of $5.70 would change that."
+            "No clean put edge here. A decisive loss of $5.70 would change that — don't chase it before then."
           ]
         ]
       },
-      "ivNear": 1.898,
-      "ivFar": 1.0
+      "ivNear": 1.336,
+      "ivFar": 1.018,
+      "near": {
+        "dte": 2,
+        "call_cost": 41.0,
+        "put_cost": 49.5,
+        "call_quoted": true,
+        "put_quoted": true
+      }
     },
     {
       "sym": "HIMS",
@@ -72,15 +70,6 @@
       "spot": 31.65,
       "chg": "−12.5% · 1mo",
       "dir": "down",
-      "anchor": {
-        "K": 26,
-        "dte": 8,
-        "prem": 2.04
-      },
-      "anchorF": {
-        "dte": 36,
-        "prem": 3.78
-      },
       "levels": [
         [
           "Support",
@@ -101,11 +90,11 @@
         "why": [
           [
             "The read",
-            "Mid-range at <b>55%</b> between $25.00 and $37.17, RSI 46. Drifting, no momentum either way."
+            "Sitting at <b>55%</b> of its 20-day range, between $25.00 and $37.17, RSI 46. Nothing in the trend, the range or the momentum lines up into a call setup here."
           ],
           [
             "Watch for",
-            "A clean break of $37.17 would start something. Until then, no setup = no trade."
+            "A clean break of $37.17 on volume would start something. Until then, no setup = no trade."
           ]
         ]
       },
@@ -115,16 +104,23 @@
         "why": [
           [
             "The read",
-            "Mid-range at <b>55%</b> between $25.00 and $37.17 — two-sided, not breaking down."
+            "Sitting at <b>55%</b> of its 20-day range, between $25.00 and $37.17, RSI 46. There's no breakdown underway to sell into — the short conditions aren't lining up."
           ],
           [
             "Watch for",
-            "No clean put edge here. A break of $25.00 would change that."
+            "No clean put edge here. A decisive loss of $25.00 would change that — don't chase it before then."
           ]
         ]
       },
-      "ivNear": 0.747,
-      "ivFar": 0.969
+      "ivNear": 1.35,
+      "ivFar": 0.984,
+      "near": {
+        "dte": 2,
+        "call_cost": 93.0,
+        "put_cost": 75.0,
+        "call_quoted": true,
+        "put_quoted": true
+      }
     },
     {
       "sym": "AI",
@@ -134,15 +130,6 @@
       "spot": 9.91,
       "chg": "+11.0% · 1mo",
       "dir": "up",
-      "anchor": {
-        "K": 10,
-        "dte": 8,
-        "prem": 1.36
-      },
-      "anchorF": {
-        "dte": 36,
-        "prem": 1.66
-      },
       "levels": [
         [
           "Support",
@@ -163,11 +150,11 @@
         "why": [
           [
             "The read",
-            "Mid-range at <b>93%</b> between $8.15 and $10.05, RSI 67. Drifting, no momentum either way."
+            "Sitting at <b>93%</b> of its 20-day range, between $8.15 and $10.05, RSI 67. Nothing in the trend, the range or the momentum lines up into a call setup here."
           ],
           [
             "Watch for",
-            "A clean break of $10.05 would start something. Until then, no setup = no trade."
+            "A clean break of $10.05 on volume would start something. Until then, no setup = no trade."
           ]
         ]
       },
@@ -177,16 +164,23 @@
         "why": [
           [
             "The read",
-            "Mid-range at <b>93%</b> between $8.15 and $10.05 — two-sided, not breaking down."
+            "Sitting at <b>93%</b> of its 20-day range, between $8.15 and $10.05, RSI 67. There's no breakdown underway to sell into — the short conditions aren't lining up."
           ],
           [
             "Watch for",
-            "No clean put edge here. A break of $8.15 would change that."
+            "No clean put edge here. A decisive loss of $8.15 would change that — don't chase it before then."
           ]
         ]
       },
-      "ivNear": 0.617,
-      "ivFar": 0.779
+      "ivNear": 0.443,
+      "ivFar": 0.791,
+      "near": {
+        "dte": 2,
+        "call_cost": 18.0,
+        "put_cost": 26.94,
+        "call_quoted": true,
+        "put_quoted": false
+      }
     },
     {
       "sym": "ODD",
@@ -196,12 +190,6 @@
       "spot": 15.22,
       "chg": "−13.1% · 1mo",
       "dir": "down",
-      "anchor": {
-        "K": 10,
-        "dte": 8,
-        "prem": 0.6
-      },
-      "anchorF": null,
       "levels": [
         [
           "Support",
@@ -222,11 +210,11 @@
         "why": [
           [
             "The read",
-            "Mid-range at <b>32%</b> between $14.18 and $17.43, RSI 42. Drifting, no momentum either way."
+            "Sitting at <b>32%</b> of its 20-day range, between $14.18 and $17.43, RSI 42. Nothing in the trend, the range or the momentum lines up into a call setup here."
           ],
           [
             "Watch for",
-            "A clean break of $17.43 would start something. Until then, no setup = no trade."
+            "A clean break of $17.43 on volume would start something. Until then, no setup = no trade."
           ]
         ]
       },
@@ -236,16 +224,23 @@
         "why": [
           [
             "The read",
-            "Mid-range at <b>32%</b> between $14.18 and $17.43 — two-sided, not breaking down."
+            "Sitting at <b>32%</b> of its 20-day range, between $14.18 and $17.43, RSI 42. There's no breakdown underway to sell into — the short conditions aren't lining up."
           ],
           [
             "Watch for",
-            "No clean put edge here. A break of $14.18 would change that."
+            "No clean put edge here. A decisive loss of $14.18 would change that — don't chase it before then."
           ]
         ]
       },
       "ivNear": 0.738,
-      "ivFar": 0.738
+      "ivFar": 0.738,
+      "near": {
+        "dte": 2,
+        "call_cost": 45.28,
+        "put_cost": 22.96,
+        "call_quoted": false,
+        "put_quoted": false
+      }
     },
     {
       "sym": "ELF",
@@ -255,15 +250,6 @@
       "spot": 86.37,
       "chg": "+14.6% · 1mo",
       "dir": "up",
-      "anchor": {
-        "K": 50,
-        "dte": 8,
-        "prem": 3.55
-      },
-      "anchorF": {
-        "dte": 36,
-        "prem": 6.63
-      },
       "levels": [
         [
           "Support",
@@ -298,7 +284,7 @@
         "why": [
           [
             "The read",
-            "An ATM put runs about <b>$533</b> — 5.3× the $100 you're working with. Can't express it at this size."
+            "An ATM put runs about <b>$657</b> — 6.6× the $100 you're working with. Can't express it at this size."
           ],
           [
             "Watch for",
@@ -306,8 +292,15 @@
           ]
         ]
       },
-      "ivNear": 2.173,
-      "ivFar": 0.535
+      "ivNear": 1.306,
+      "ivFar": 0.535,
+      "near": {
+        "dte": 2,
+        "call_cost": 695.0,
+        "put_cost": 657.08,
+        "call_quoted": true,
+        "put_quoted": false
+      }
     }
   ],
   "reads": {

@@ -122,8 +122,9 @@ def snap(**kw):
     """A mid-range, unremarkable snapshot. Override only what a test cares about."""
     base = dict(
         sym="TEST", spot=10.0, sma20=10.0, sma50=10.0, rsi=50.0, pos=50.0,
-        hi20=12.0, lo20=8.0, chg_1mo=0.0, chg_5d=0.0, iv=0.8, rvol=0.8,
-        call_cost=50.0, put_cost=50.0, near_dte=8,
+        hi20=12.0, lo20=8.0, chg_1mo=0.0, chg_5d=0.0, iv=0.8, iv_far=0.8,
+        rvol=0.8, call_cost=50.0, put_cost=50.0, near_dte=8,
+        call_quoted=True, put_quoted=True,
     )
     base.update(kw)
     return base
@@ -219,8 +220,8 @@ class TestVerdicts(unittest.TestCase):
 
     def test_rich_iv_downgrades_a_go_to_wait(self):
         setup = dict(spot=11.0, sma20=10.5, sma50=10.0, pos=70.0, rsi=60.0)
-        cheap = analysis.decide("call", snap(iv=0.8, rvol=0.8, **setup))
-        rich = analysis.decide("call", snap(iv=1.6, rvol=0.8, **setup))
+        cheap = analysis.decide("call", snap(iv_far=0.8, rvol=0.8, **setup))
+        rich = analysis.decide("call", snap(iv_far=1.6, rvol=0.8, **setup))
         self.assertEqual(cheap.verdict, "go")
         self.assertIsNone(cheap.overlay)
         self.assertEqual(rich.verdict, "wait")
@@ -228,9 +229,33 @@ class TestVerdicts(unittest.TestCase):
         self.assertEqual(rich.rule_id, "clean_setup")  # the setup read is unchanged
 
     def test_rich_iv_does_not_upgrade_or_touch_a_skip(self):
-        d = analysis.decide("call", snap(pos=95.0, rsi=74.0, iv=1.6, rvol=0.8))
+        d = analysis.decide("call", snap(pos=95.0, rsi=74.0, iv_far=1.6, rvol=0.8))
         self.assertEqual(d.verdict, "skip")
         self.assertIsNone(d.overlay)
+
+    def test_rich_premium_is_judged_on_the_far_dated_vol_not_the_near_print(self):
+        """A hot short-dated print is not evidence of a rich month-out premium.
+
+        SOUN's real 2-day ATM printed 190% against ~100% realized and ELF's
+        217% against 54% — both clear RICH_IV_MULTIPLE on the near reading
+        alone, which would have made a `go` unreachable for either name on a
+        number that measures gamma and event risk, not price. Only the ~30-day
+        reading, whose term is close enough to 20-day realized for the ratio to
+        mean anything, may drive the downgrade.
+        """
+        setup = dict(spot=11.0, sma20=10.5, sma50=10.0, pos=70.0, rsi=60.0, rvol=0.8)
+        hot_near = analysis.decide("call", snap(iv=2.173, iv_far=0.8, **setup))
+        self.assertEqual(hot_near.verdict, "go")
+        self.assertIsNone(hot_near.overlay)
+
+        hot_far = analysis.decide("call", snap(iv=0.5, iv_far=1.6, **setup))
+        self.assertEqual(hot_far.verdict, "wait")
+        self.assertEqual(hot_far.overlay, "rich_iv")
+
+    def test_a_missing_far_iv_cannot_flag_a_premium_rich(self):
+        s = snap(spot=11.0, sma20=10.5, sma50=10.0, pos=70.0, rsi=60.0, rvol=0.8)
+        del s["iv_far"]
+        self.assertFalse(analysis._iv_is_rich(s))
 
     def test_every_verdict_is_a_known_css_key(self):
         allowed = {"go", "wait", "skip", "mute"}
@@ -267,10 +292,61 @@ class TestProse(unittest.TestCase):
                 self.assertNotIn("{", text, (direction, rule_id))
 
     def test_overlay_replaces_the_watch_line(self):
-        s = snap(spot=11.0, sma20=10.5, sma50=10.0, pos=70.0, rsi=60.0, iv=1.6, rvol=0.8)
+        s = snap(spot=11.0, sma20=10.5, sma50=10.0, pos=70.0, rsi=60.0,
+                 iv_far=1.6, rvol=0.8)
         d = analysis.decide("call", s)
         why = analysis.render("call", d, s)
         self.assertIn("rich", why[1][1].lower())
+
+    def test_rich_premium_prose_cites_the_vol_it_compared(self):
+        """The sentence must quote the far-dated vol that actually triggered the
+        downgrade, not the short-dated print that didn't."""
+        s = snap(spot=11.0, sma20=10.5, sma50=10.0, pos=70.0, rsi=60.0,
+                 iv=2.5, iv_far=1.6, rvol=0.8)
+        d = analysis.decide("call", s)
+        line = analysis.render("call", d, s)[1][1]
+        self.assertIn("160%", line)   # iv_far
+        self.assertIn("80%", line)    # rvol
+        self.assertNotIn("250%", line)  # the near print played no part in this
+
+    # --- chop is the catch-all, so its copy must survive the whole range -----
+    CHOP_CLAIMS = ("mid-range", "drifting", "two-sided", "no momentum")
+
+    def _chop_lines(self, direction, pos):
+        # Flat averages and a distant 20-day high, so no earlier rule can match
+        # and `chop` is genuinely the rule under test at every position.
+        s = snap(pos=pos, rsi=55.0, spot=9.91, sma20=10.0, sma50=10.0,
+                 lo20=8.15, hi20=12.0)
+        d = analysis.decide(direction, s)
+        self.assertEqual(d.rule_id, "chop", (direction, pos))
+        why = analysis.render(direction, d, s)
+        return why, why[0][1] + " " + why[1][1]
+
+    def test_chop_copy_makes_no_claim_the_rule_does_not_establish(self):
+        """`chop` fires at ANY range position when nothing else matched, so it
+        may not assert mid-range, drifting, or two-sided. The published AI card
+        said "Mid-range at 93% ... Drifting, no momentum either way" beside a
+        card reading In range 93%, +11.0% on the month and resistance 1.4%
+        overhead — prose contradicting the numbers printed next to it.
+        """
+        for direction in ("call", "put"):
+            for pos in (5.0, 50.0, 93.0):
+                _, blob = self._chop_lines(direction, pos)
+                for claim in self.CHOP_CLAIMS:
+                    self.assertNotIn(claim, blob.lower(), (direction, pos, claim))
+
+    def test_chop_copy_states_the_actual_range_position(self):
+        for direction in ("call", "put"):
+            for pos in (5.0, 50.0, 93.0):
+                _, blob = self._chop_lines(direction, pos)
+                self.assertIn("%d%%" % int(pos), blob, (direction, pos))
+                self.assertNotIn("{", blob)
+
+    def test_chop_copy_keeps_its_closing_discipline(self):
+        _, call_blob = self._chop_lines("call", 93.0)
+        self.assertIn("no setup = no trade", call_blob.lower())
+        _, put_blob = self._chop_lines("put", 5.0)
+        self.assertIn("chase", put_blob.lower())
 
     def test_templates_contain_no_hardcoded_price_levels(self):
         """Every price and measured value in the output must come from the snapshot.
@@ -417,7 +493,7 @@ class TestSnapshotIntegration(unittest.TestCase):
     def series(values):
         return [float(v) for v in values]
 
-    def build(self, closes, iv=None):
+    def build(self, closes, iv=None, iv_far=None):
         rv = analysis.realized_vol(closes)
         spot = closes[-1]
         return dict(
@@ -428,10 +504,12 @@ class TestSnapshotIntegration(unittest.TestCase):
             hi20=max(closes[-20:]), lo20=min(closes[-20:]),
             chg_1mo=analysis.pct_change(closes, 21),
             chg_5d=analysis.pct_change(closes, 5),
-            iv=iv if iv is not None else rv, rvol=rv,
+            iv=iv if iv is not None else rv,
+            iv_far=iv_far if iv_far is not None else rv,
+            rvol=rv,
             call_cost=analysis.contract_cost("call", spot, 8, iv or rv),
             put_cost=analysis.contract_cost("put", spot, 8, iv or rv),
-            near_dte=8,
+            near_dte=8, call_quoted=True, put_quoted=True,
         )
 
     def test_steady_uptrend_produces_a_renderable_call_verdict(self):

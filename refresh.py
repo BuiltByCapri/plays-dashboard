@@ -13,12 +13,31 @@ import datetime
 import json
 import os
 import sys
+from collections import namedtuple
 
 import analysis
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data.json")
 MINUS = "−"
+
+# The two horizons the *published* implied vols target. These are display and
+# fair-value numbers: index.html prices anything out to 20 days off ivNear and
+# anything beyond off ivFar, so ivNear has to be a term that plausibly covers
+# that span. It is deliberately NOT the near-Friday expiry — that quote can be
+# 1-4 days out and carry an earnings-loaded, gamma-inflated print, which priced
+# a 16-day contract several times too high when the frontend read it as ivNear.
+# The Friday quote still exists and still prices the budget gate; it just no
+# longer gets published as the term structure.
+DISPLAY_IV_DTE = 8
+FAR_IV_DTE = 30
+
+# call_quote/put_quote and `expiry` are the near-Friday contract the budget gate
+# prices off. iv_near/iv_far are the published ~8d and ~30d ATM prints.
+# price_iv is the near expiry's own resolved vol, used only to Black-Scholes the
+# near contract when its quote is unusable.
+OptionData = namedtuple(
+    "OptionData", "call_quote put_quote expiry iv_near iv_far price_iv")
 
 
 def history(ticker):
@@ -85,57 +104,48 @@ def _resolve_iv(quote, realized, ticker=None, expiry=None):
     return round(iv, 3)
 
 
+def _quoted(quote):
+    """True when this quote is usable enough that _priced() will price off it.
+
+    The single source of truth for "is there a real price behind this number",
+    shared by the cost calculation and the flag published to the page so the
+    frontend can decline to show a confident fit badge over a modelled cost.
+    """
+    _, bid, ask, oi = quote
+    return analysis.quote_is_liquid(bid, ask, oi)
+
+
 def _priced(direction, quote, spot, dte, iv):
     """Dollar cost for one direction: the real quoted mid if usable, else Black-Scholes."""
-    _, bid, ask, oi = quote
-    if analysis.quote_is_liquid(bid, ask, oi):
-        return analysis.quote_cost(bid, ask)
+    if _quoted(quote):
+        return analysis.quote_cost(quote[1], quote[2])
     return analysis.contract_cost(direction, spot, dte, iv)
 
 
-def atm_iv(ticker, spot, target_days, realized):
-    """ATM implied vol for the expiry nearest target_days, sanity-checked.
+def option_data(ticker, spot, near_dte, realized):
+    """Everything one name needs out of the option chain, in one pass.
 
-    Used for the far expiry, which only feeds the page's fair-value display —
-    see near_quotes() for the near expiry, which also prices the budget gate.
-    A failure here just falls back to realized vol and is logged; it never
-    blocks the refresh, since nothing downstream gates on the far reading.
-    """
-    try:
-        import yfinance as yf
-        tk = yf.Ticker(ticker)
-        exps = tk.options
-        if not exps:
-            print("    %s: no listed option expiries — far iv falls back to realized"
-                  % ticker, flush=True)
-            return round(realized, 3)
-        best = _nearest_expiry(exps, target_days)
-        quote = _quote(_atm_row(tk.option_chain(best).calls, spot))
-        return _resolve_iv(quote, realized, ticker, best)
-    except Exception as e:
-        print("    %s: far option chain failed (%s: %s) — falls back to realized"
-              % (ticker, type(e).__name__, e), flush=True)
-        return round(realized, 3)
+    Three horizons come off the same expiry list:
 
+    - the expiry nearest `near_dte` (the coming Friday), whose ATM call and put
+      quotes price the budget gate — that gate asks "can I actually buy this",
+      so it must key off the contract the user would actually buy;
+    - the expiry nearest DISPLAY_IV_DTE, whose ATM call IV is published as
+      `ivNear` for the page's fair-value math;
+    - the expiry nearest FAR_IV_DTE, published as `ivFar`.
 
-def near_quotes(ticker, spot, near_dte):
-    """ATM call and put quotes for the expiry nearest near_dte.
+    Chains are cached by expiry, so when two targets resolve to the same
+    contract — the common case early in the week, where the coming Friday *is*
+    the ~8-day expiry — it is fetched once rather than twice.
 
-    One option_chain() fetch returns both sides, so the near IV reading and
-    both the call_cost and put_cost budget-gate prices come from a single
-    round trip rather than three.
-
-    Returns (call_quote, put_quote, expiry) on success — each quote an
-    (iv, bid, ask, open_interest) tuple, even if a quote later turns out
-    illiquid (handled downstream via the usual realized-vol/Black-Scholes
-    fallback, which is fine — that's the design, not a failure).
-
-    Returns None, not a tuple of empty quotes, if no near chain could be
-    fetched at all. Falling through silently here would let build_snapshot
-    price the budget gate off Black-Scholes at realized vol with zero real
-    quote behind it — exactly the unbounded-cost bug the liquidity design
-    change fixed — so a missing chain must be logged and treated by the
-    caller as a failed refresh for the name, not a quiet downgrade.
+    Returns an OptionData, or None if the *near* chain could not be fetched at
+    all. Falling through silently there would let build_snapshot price the
+    budget gate off Black-Scholes at realized vol with zero real quote behind
+    it — exactly the unbounded-cost bug the liquidity design change fixed — so
+    a missing near chain is logged and treated by the caller as a failed
+    refresh for the name, not a quiet downgrade. A missing *display* or *far*
+    chain is not fatal: nothing gates on those, so they fall back to realized
+    vol and are logged.
     """
     try:
         import yfinance as yf
@@ -149,15 +159,49 @@ def near_quotes(ticker, spot, near_dte):
         print("    %s: no listed option expiries — near chain unavailable"
               % ticker, flush=True)
         return None
-    best = _nearest_expiry(exps, near_dte)
+
+    cache = {}
+
+    def quotes(expiry):
+        """(call_quote, put_quote) for one expiry, fetched at most once."""
+        if expiry not in cache:
+            chain = tk.option_chain(expiry)
+            cache[expiry] = (_quote(_atm_row(chain.calls, spot)),
+                             _quote(_atm_row(chain.puts, spot)))
+        return cache[expiry]
+
+    near_expiry = _nearest_expiry(exps, near_dte)
     try:
-        chain = tk.option_chain(best)
-        return (_quote(_atm_row(chain.calls, spot)),
-                _quote(_atm_row(chain.puts, spot)), best)
+        call_quote, put_quote = quotes(near_expiry)
     except Exception as e:
         print("    %s %s: near option chain failed (%s: %s) — near chain unavailable"
-              % (ticker, best, type(e).__name__, e), flush=True)
+              % (ticker, near_expiry, type(e).__name__, e), flush=True)
         return None
+
+    def iv_at(target_days, label):
+        expiry = _nearest_expiry(exps, target_days)
+        try:
+            call_side = quotes(expiry)[0]
+        except Exception as e:
+            print("    %s %s: %s option chain failed (%s: %s) — falls back to realized"
+                  % (ticker, expiry, label, type(e).__name__, e), flush=True)
+            return round(realized, 3)
+        return _resolve_iv(call_side, realized, ticker, expiry)
+
+    iv_near = iv_at(DISPLAY_IV_DTE, "display")
+    iv_far = iv_at(FAR_IV_DTE, "far")
+
+    # The near contract's Black-Scholes fallback wants the near expiry's own
+    # vol, not the 8-day display print — a 2-day contract modelled at an 8-day
+    # vol is the same term mismatch in miniature. Reuse the display reading
+    # only when the two targets landed on the same expiry, which also keeps
+    # the discard log from printing the same line twice.
+    if _nearest_expiry(exps, DISPLAY_IV_DTE) == near_expiry:
+        price_iv = iv_near
+    else:
+        price_iv = _resolve_iv(call_quote, realized, ticker, near_expiry)
+
+    return OptionData(call_quote, put_quote, near_expiry, iv_near, iv_far, price_iv)
 
 
 def days_to_next_friday(today):
@@ -178,17 +222,9 @@ def build_snapshot(name, closes, near_dte):
     spot = closes[-1]
     rvol = analysis.realized_vol(closes)
 
-    near = near_quotes(name["yf"], spot, near_dte)
-    if near is None:
+    opt = option_data(name["yf"], spot, near_dte, rvol)
+    if opt is None:
         return None
-    call_quote, put_quote, near_expiry = near
-    iv_near = _resolve_iv(call_quote, rvol, name["yf"], near_expiry)
-    # Falls back to realized vol, not iv_near: iv_near can be an extreme
-    # short-dated reading (e.g. a 2-day ATM print well above its annualized
-    # realized vol for legitimate reasons), and using it as the far-expiry
-    # fallback would let that spike leak into the ~1mo fair-value the page
-    # shows, uncapped, if the far quote itself turns out to be unusable.
-    iv_far = atm_iv(name["yf"], spot, 30, rvol)
 
     window = closes[-20:]
     return {
@@ -202,12 +238,17 @@ def build_snapshot(name, closes, near_dte):
         "lo20": min(window),
         "chg_1mo": analysis.pct_change(closes, 21) or 0.0,
         "chg_5d": analysis.pct_change(closes, 5) or 0.0,
-        "iv": iv_near,
-        "iv_far": iv_far,
+        "iv": opt.iv_near,
+        "iv_far": opt.iv_far,
         "rvol": rvol,
         "near_dte": near_dte,
-        "call_cost": _priced("call", call_quote, spot, near_dte, iv_near),
-        "put_cost": _priced("put", put_quote, spot, near_dte, iv_near),
+        "call_cost": _priced("call", opt.call_quote, spot, near_dte, opt.price_iv),
+        "put_cost": _priced("put", opt.put_quote, spot, near_dte, opt.price_iv),
+        # Whether each cost above is a real quoted mid or a Black-Scholes
+        # estimate. Published, because the page must not badge a modelled cost
+        # as a confident "fits $100".
+        "call_quoted": _quoted(opt.call_quote),
+        "put_quoted": _quoted(opt.put_quote),
     }
 
 
@@ -225,6 +266,21 @@ def apply_snapshot(name, snap):
     ]
     name["ivNear"] = snap["iv"]
     name["ivFar"] = snap["iv_far"]
+    # The near expiry's real cost, so the contract row and the "why" text quote
+    # the same number for the same contract instead of the page re-deriving its
+    # own Black-Scholes price beside the quoted one.
+    name["near"] = {
+        "dte": snap["near_dte"],
+        "call_cost": round(snap["call_cost"], 2),
+        "put_cost": round(snap["put_cost"], 2),
+        "call_quoted": bool(snap["call_quoted"]),
+        "put_quoted": bool(snap["put_quoted"]),
+    }
+    # Frozen June premiums that nothing refreshes. They were only ever reachable
+    # through index.html's calibration fallback, which now tolerates their
+    # absence — nothing should calibrate today's fair value off a June print.
+    name.pop("anchor", None)
+    name.pop("anchorF", None)
 
     decisions = {}
     for direction in ("call", "put"):
@@ -269,10 +325,14 @@ def main():
         for direction in ("call", "put"):
             results[direction].append({"sym": name["sym"],
                                        "decision": decisions[direction]})
-        print("  %s: $%.2f (%s) range $%.2f-$%.2f pos %d%% iv %.0f%% rv %.0f%% "
+        print("  %s: $%.2f (%s) range $%.2f-$%.2f pos %d%% ivN %.0f%% ivF %.0f%% "
+              "rv %.0f%% | near %dd call $%.0f%s put $%.0f%s "
               "| call %s/%s put %s/%s" % (
                   name["sym"], snap["spot"], name["chg"], snap["lo20"], snap["hi20"],
-                  round(snap["pos"]), snap["iv"] * 100, snap["rvol"] * 100,
+                  round(snap["pos"]), snap["iv"] * 100, snap["iv_far"] * 100,
+                  snap["rvol"] * 100, snap["near_dte"],
+                  snap["call_cost"], "" if snap["call_quoted"] else " (est)",
+                  snap["put_cost"], "" if snap["put_quoted"] else " (est)",
                   decisions["call"].verdict, decisions["call"].rule_id,
                   decisions["put"].verdict, decisions["put"].rule_id), flush=True)
 

@@ -205,6 +205,36 @@ gate — so a name whose contracts genuinely cost $580–810 was published as a 
 
 The absolute `0.1 < iv < 4.0` band stays as a backstop.
 
+**Amendment (2026-08-05, final review).** Pricing the budget gate off the coming
+Friday's quote is right, but *publishing* that expiry's implied vol as `ivNear`
+was not. `index.html` prices every contract out to 20 days off `ivNear`, and the
+coming Friday is 1–4 days out — a term whose implied vol carries event risk and
+gamma that a 9- or 16-day contract does not. Published on 2026-08-05, ELF's near
+print was 217% against a 54% 30-day reading, which made the analyzer value a
+16-day contract several times too high and would have called an at-market
+premium "cheap vs fair".
+
+The two uses are now decoupled. `option_data()` reads three horizons off one
+expiry list, caching chains so coinciding targets cost one round trip:
+
+| Target | Constant | Published as | Feeds |
+|--------|----------|--------------|-------|
+| coming Friday | `days_to_next_friday()` | `near.call_cost` / `near.put_cost` | budget gate, contract row |
+| ~8 days | `DISPLAY_IV_DTE` | `ivNear` | fair value for dte ≤ 20 |
+| ~30 days | `FAR_IV_DTE` | `ivFar` | fair value beyond, rich-premium overlay |
+
+`RICH_IV_MULTIPLE` now compares `ivFar` against realized vol. Compared against
+the short-dated print it was the same term mismatch `IV_SANITY_MULTIPLE` was
+deleted for: SOUN and ELF both cleared 1.35× on legitimate readings and could
+never have reached `go`, while a name whose quote was *discarded* got
+`iv := rvol`, a ratio of exactly 1.00, and became unflaggable — rewarding bad
+data.
+
+The quoted near costs are published as `names[].near` (`dte`, `call_cost`,
+`put_cost`, `call_quoted`, `put_quoted`) so the contract row and the "why" text
+cannot print two different prices for the same contract, and so the page can
+decline to badge a modelled cost as a confident fit.
+
 ## Constants
 
 Named at the top of `refresh.py`, since several are fitted judgments rather than

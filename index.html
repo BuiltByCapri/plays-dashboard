@@ -172,13 +172,35 @@ const TV={SOUN:'NASDAQ:SOUN',HIMS:'NYSE:HIMS',AI:'NYSE:AI',ODD:'NASDAQ:ODD',ELF:
 const cards=document.getElementById('cards');
 const fmtD=s=>{try{return new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}catch(e){return s;}};
 
-function ivFor(d,dte){return dte<=20?d.ivNear:d.ivFar;}
+// ivNear targets ~8 days and ivFar ~30, matching DISPLAY_IV_DTE/FAR_IV_DTE in
+// refresh.py. Guarded because a legacy payload may carry neither; bsPrice()
+// treats iv<=0 as zero time value rather than rendering NaN.
+function ivFor(d,dte){const iv=dte<=20?d.ivNear:d.ivFar;return (typeof iv==='number'&&iv>0)?iv:0;}
+
+// The near row prefers the cost refresh.py actually quoted for that expiry, so
+// this row and the "why" text can't print two prices for the same contract.
+// Only when the published expiry still matches the Friday this page computed —
+// otherwise the quote belongs to an expiry that has since passed.
+function nearCost(d,dte){
+  const n=d.near;
+  if(!n||n.dte!==dte) return null;
+  const cost=n[DIR+'_cost'];
+  if(typeof cost!=='number'||!(cost>0)) return null;
+  return {cost, quoted: n[DIR+'_quoted']===true};
+}
 function contractsFor(d){
   const K=Math.max(0.5,Math.round(d.spot));
   return [SHORT,MONTHLY].map((f,idx)=>{
-    const dte=dteOf(f), iv=ivFor(d,dte), prem=bsPrice(DIR,d.spot,K,dte/365,iv), cost=prem*100;
-    return {K,dte,label:md(f)+(idx?' · ~1mo':' · this Fri'),prem,cost,
-      fit: cost<=105?'ok':'no', fitTxt: cost<=105?'fits $100':'$'+cost.toFixed(0),
+    const dte=dteOf(f);
+    const q=idx?null:nearCost(d,dte);
+    const cost=q?q.cost:bsPrice(DIR,d.spot,K,dte/365,ivFor(d,dte))*100;
+    const prem=cost/100, quoted=!!(q&&q.quoted);
+    // A modelled cost gets a muted "est" badge, never a confident fit claim:
+    // the fit badge is the most decision-relevant thing on the card and it may
+    // only say the contract fits over a price someone will really trade at.
+    return {K,dte,label:md(f)+(idx?' · ~1mo':' · this Fri'),prem,cost,quoted,
+      fit: quoted?(cost<=105?'ok':'no'):'na',
+      fitTxt: quoted?(cost<=105?'fits $100':'$'+cost.toFixed(0)):'est $'+cost.toFixed(0),
       r: d[DIR].verdict};
   });
 }
@@ -200,7 +222,7 @@ function build(){
       <div class="levels">${d.levels.map(l=>`<div class="lv"><div class="k">${l[0]}</div><div class="vv">${l[1]}</div></div>`).join('')}</div>
       <div class="contracts">${cts.map(ct=>`
         <div class="ct"><i class="pip ${ct.r}"></i>
-          <div class="meta"><div class="play">$${ct.K} ${DIR}${DIR==='call'?'':''} · ${ct.label}</div><div class="sub">~$${ct.prem.toFixed(2)} · ATM · ${ct.dte}d</div></div>
+          <div class="meta"><div class="play">$${ct.K} ${DIR}${DIR==='call'?'':''} · ${ct.label}</div><div class="sub">${ct.quoted?'':'~'}$${ct.prem.toFixed(2)} · ${ct.quoted?'quoted mid':'est'} · ATM · ${ct.dte}d</div></div>
           <span class="fit ${ct.fit}">${ct.fitTxt}</span></div>`).join('')}
       </div>
       <div class="analyzer">
@@ -292,10 +314,14 @@ fetch('data.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(p=>{
   document.getElementById('asof').textContent='as of '+fmtD(p.updated)+' · close prices';
   const ad=document.getElementById('andate'); if(ad&&p.analysis_date) ad.textContent='analysis refreshed '+fmtD(p.analysis_date);
   NAMES=p.names;
-  if(p.reads&&p.reads.call&&p.reads.put) READS=p.reads;
-  NAMES.forEach(d=>{   // prefer fresh IV from the daily refresh; fall back to calibration
-    if(typeof d.ivNear!=='number') d.ivNear=calibIV(d.spot,d.anchor.K,d.anchor.dte,d.anchor.prem);
-    if(typeof d.ivFar!=='number')  d.ivFar=d.anchorF?calibIV(d.spot,d.anchor.K,d.anchorF.dte,d.anchorF.prem):d.ivNear;
+  // Truthiness alone isn't enough: a present-but-malformed reads block would
+  // render the literal string "undefined" where the week's read belongs, which
+  // looks like analysis instead of like the failure it is.
+  const okRead=r=>Array.isArray(r)&&r.length===2;
+  if(p.reads&&okRead(p.reads.call)&&okRead(p.reads.put)) READS=p.reads;
+  NAMES.forEach(d=>{   // fresh IV from the daily refresh; legacy anchors are a last resort
+    if(typeof d.ivNear!=='number'&&d.anchor) d.ivNear=calibIV(d.spot,d.anchor.K,d.anchor.dte,d.anchor.prem);
+    if(typeof d.ivFar!=='number')  d.ivFar=(d.anchor&&d.anchorF)?calibIV(d.spot,d.anchor.K,d.anchorF.dte,d.anchorF.prem):d.ivNear;
   });
   setDir('call');
 }).catch(e=>{ document.getElementById('asof').textContent='couldn’t load data — refresh'; });

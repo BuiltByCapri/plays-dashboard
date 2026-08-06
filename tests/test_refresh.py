@@ -1,14 +1,19 @@
 """Offline tests for refresh.py's pure helpers.
 
-refresh.py imports yfinance only inside history()/near_quotes()/atm_iv(), so
+refresh.py imports yfinance only inside history()/option_data(), so
 `import refresh` works fine without yfinance installed, and _num/_priced/
-_resolve_iv can be exercised directly with plain numbers and dict/tuple
-fixtures — no network, no pandas, no yfinance required.
+_resolve_iv/_quoted/apply_snapshot can be exercised directly with plain numbers
+and dict/tuple fixtures — no network, no pandas, no yfinance required.
 """
+import json
+import os
+import re
 import unittest
 
 import analysis
 import refresh
+
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class TestNum(unittest.TestCase):
@@ -67,6 +72,178 @@ class TestResolveIv(unittest.TestCase):
     def test_out_of_band_iv_falls_back_to_realized_even_if_liquid(self):
         quote = (5.0, 0.40, 0.42, 7929)  # absurd iv, but a liquid-looking quote
         self.assertAlmostEqual(refresh._resolve_iv(quote, realized=0.58), 0.58)
+
+
+class TestQuotedFlag(unittest.TestCase):
+    """_quoted() must agree exactly with what _priced() actually did."""
+
+    def test_true_when_priced_off_the_quote(self):
+        quote = (0.62, 0.40, 0.42, 7929)   # SOUN: liquid
+        self.assertTrue(refresh._quoted(quote))
+        self.assertAlmostEqual(refresh._priced("call", quote, 6.43, 2, 0.58),
+                               analysis.quote_cost(0.40, 0.42))
+
+    def test_false_when_priced_off_the_model(self):
+        quote = (1.72, 0.30, 1.80, 1)      # ODD: dead market
+        self.assertFalse(refresh._quoted(quote))
+        self.assertAlmostEqual(refresh._priced("call", quote, 15.22, 2, 0.74),
+                               analysis.contract_cost("call", 15.22, 2, 0.74))
+
+
+class TestIvTargets(unittest.TestCase):
+    """ivNear is a display/fair-value term, not the tradeable-Friday term."""
+
+    def test_display_iv_targets_about_a_week_out(self):
+        # index.html prices everything out to 20 days off ivNear, so a 1-4 day
+        # earnings-loaded print must not be what gets published there.
+        self.assertEqual(refresh.DISPLAY_IV_DTE, 8)
+        self.assertEqual(refresh.FAR_IV_DTE, 30)
+
+    def test_near_friday_can_be_much_shorter_than_the_display_target(self):
+        import datetime
+        wednesday = datetime.date(2026, 8, 5)
+        self.assertEqual(refresh.days_to_next_friday(wednesday), 2)
+        self.assertLess(refresh.days_to_next_friday(wednesday), refresh.DISPLAY_IV_DTE)
+
+    def test_nearest_expiry_picks_the_closest_listed_date(self):
+        import datetime
+        today = datetime.date.today()
+        exps = [(today + datetime.timedelta(days=d)).isoformat()
+                for d in (2, 9, 16, 30, 58)]
+        self.assertEqual(refresh._nearest_expiry(exps, 2), exps[0])
+        self.assertEqual(refresh._nearest_expiry(exps, refresh.DISPLAY_IV_DTE), exps[1])
+        self.assertEqual(refresh._nearest_expiry(exps, refresh.FAR_IV_DTE), exps[3])
+
+
+def _snap(**kw):
+    base = dict(
+        sym="ELF", spot=86.37, sma20=79.27, sma50=69.20, rsi=69.3, pos=90.6,
+        hi20=87.84, lo20=72.25, chg_1mo=14.6, chg_5d=1.0,
+        iv=0.61, iv_far=0.535, rvol=0.535, near_dte=2,
+        call_cost=695.0, put_cost=533.0, call_quoted=True, put_quoted=True,
+    )
+    base.update(kw)
+    return base
+
+
+class TestApplySnapshot(unittest.TestCase):
+    def test_publishes_the_quoted_near_costs(self):
+        """The contract row and the "why" text must price the same contract the
+        same way. Before this, refresh computed call_cost from the real quoted
+        mid, dropped it, and index.html re-derived its own Black-Scholes price
+        for the row — ELF's card said $695 in prose above a row reading ~$572.
+        """
+        name = {"sym": "ELF", "yf": "ELF"}
+        refresh.apply_snapshot(name, _snap())
+        self.assertEqual(name["near"]["dte"], 2)
+        self.assertAlmostEqual(name["near"]["call_cost"], 695.0)
+        self.assertAlmostEqual(name["near"]["put_cost"], 533.0)
+        self.assertTrue(name["near"]["call_quoted"])
+        self.assertTrue(name["near"]["put_quoted"])
+        # the same number the prose cites
+        self.assertIn("$695", name["call"]["why"][0][1])
+
+    def test_records_a_modelled_cost_as_unquoted(self):
+        """ODD's near call really quotes $0.30/$1.80 on 1 open interest. The
+        model fallback published "~$0.45 · fits $100" with nothing behind it,
+        so the flag that lets the page decline that badge must be published."""
+        name = {"sym": "ODD", "yf": "ODD"}
+        refresh.apply_snapshot(name, _snap(sym="ODD", call_quoted=False,
+                                          put_quoted=False, call_cost=45.0))
+        self.assertFalse(name["near"]["call_quoted"])
+        self.assertFalse(name["near"]["put_quoted"])
+        self.assertAlmostEqual(name["near"]["call_cost"], 45.0)
+
+    def test_drops_the_frozen_june_anchors(self):
+        name = {"sym": "ELF", "yf": "ELF",
+                "anchor": {"K": 50, "dte": 8, "prem": 3.55},
+                "anchorF": {"dte": 36, "prem": 6.63}}
+        refresh.apply_snapshot(name, _snap())
+        self.assertNotIn("anchor", name)
+        self.assertNotIn("anchorF", name)
+
+    def test_publishes_both_iv_terms(self):
+        name = {"sym": "ELF", "yf": "ELF"}
+        refresh.apply_snapshot(name, _snap(iv=0.61, iv_far=0.535))
+        self.assertAlmostEqual(name["ivNear"], 0.61)
+        self.assertAlmostEqual(name["ivFar"], 0.535)
+
+
+class TestPublishedPayload(unittest.TestCase):
+    """The committed data.json is what the page actually reads."""
+
+    @classmethod
+    def setUpClass(cls):
+        with open(os.path.join(HERE, "data.json")) as f:
+            cls.data = json.load(f)
+
+    def test_every_name_publishes_its_near_costs(self):
+        for name in self.data["names"]:
+            near = name.get("near")
+            self.assertIsInstance(near, dict, name["sym"])
+            for key in ("dte", "call_cost", "put_cost"):
+                self.assertIsInstance(near[key], (int, float), (name["sym"], key))
+            for key in ("call_quoted", "put_quoted"):
+                self.assertIsInstance(near[key], bool, (name["sym"], key))
+
+    def test_no_frozen_anchors_survive(self):
+        for name in self.data["names"]:
+            self.assertNotIn("anchor", name, name["sym"])
+            self.assertNotIn("anchorF", name, name["sym"])
+
+    def test_reads_are_the_two_element_pairs_the_page_expects(self):
+        for direction in ("call", "put"):
+            read = self.data["reads"][direction]
+            self.assertIsInstance(read, list)
+            self.assertEqual(len(read), 2)
+            self.assertTrue(all(isinstance(x, str) and x.strip() for x in read))
+
+
+class TestPageContract(unittest.TestCase):
+    """Source-level guards on index.html.
+
+    There is no JS runtime in this repo (no node, no browser), so these assert
+    on the source of the two seams a backend change can silently break. They
+    are regression anchors, not a substitute for running the page.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        with open(os.path.join(HERE, "index.html")) as f:
+            cls.src = f.read()
+
+    def test_reads_guard_checks_shape_not_just_truthiness(self):
+        """A present-but-malformed reads block used to render the literal
+        string "undefined" where the week's read belongs."""
+        self.assertIn("Array.isArray(r)", self.src)
+        self.assertIn("r.length===2", self.src)
+        self.assertIn("okRead(p.reads.call)", self.src)
+        self.assertIn("okRead(p.reads.put)", self.src)
+        # the old truthiness-only guard must be gone
+        self.assertNotIn("p.reads&&p.reads.call&&p.reads.put", self.src)
+
+    def test_anchor_is_never_dereferenced_unconditionally(self):
+        """The June anchors are gone from data.json; the fallback that reads
+        them must tolerate their absence rather than throw on d.anchor.K."""
+        for line in self.src.splitlines():
+            if "d.anchor." in line:
+                guarded = ("&&d.anchor)" in line or "(d.anchor&&" in line
+                           or "d.anchor?" in line)
+                self.assertTrue(guarded, "unguarded d.anchor deref: %r" % line.strip())
+
+    def test_near_row_prefers_the_published_cost(self):
+        self.assertIn("function nearCost(", self.src)
+        self.assertIn("n[DIR+'_cost']", self.src)
+        self.assertIn("n[DIR+'_quoted']===true", self.src)
+        self.assertIn("n.dte!==dte", self.src)   # only for the matching expiry
+
+    def test_unquoted_rows_do_not_claim_a_fit(self):
+        """"fits $100" may only appear on a branch gated by `quoted`."""
+        self.assertIn("quoted?(cost<=105?'ok':'no'):'na'", self.src)
+        self.assertIn("'est $'+cost.toFixed(0)", self.src)
+        for hit in re.finditer(r"fits \$100", self.src):
+            line = self.src[:hit.start()].rsplit("\n", 1)[-1]
+            self.assertIn("quoted?", line)
 
 
 if __name__ == "__main__":

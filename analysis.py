@@ -178,9 +178,19 @@ def cost_for(direction, snap):
 
 
 def _iv_is_rich(snap):
+    """True when the ~1-month implied vol sits well above realized vol.
+
+    Deliberately reads `iv_far`, not `iv`. `iv` is the short-dated display
+    print, and short-dated implied vol structurally runs far above 20-day
+    realized vol for legitimate reasons — event risk, gamma into expiry — so
+    holding it against realized is the same apples-to-oranges comparison that
+    `IV_SANITY_MULTIPLE` was removed for. The ~30-day reading is close enough
+    in term to 20-day realized that the ratio means something, which is what
+    this judgment about price needs.
+    """
     rvol = snap.get("rvol") or 0.0
-    iv = snap.get("iv") or 0.0
-    return rvol > 0 and iv > rvol * RICH_IV_MULTIPLE
+    iv_far = snap.get("iv_far") or 0.0
+    return rvol > 0 and iv_far > rvol * RICH_IV_MULTIPLE
 
 
 def _call_rule(s):
@@ -261,10 +271,15 @@ TEMPLATES = {
         "with the trend up and RSI {rsi:.0f}. Coiled, not broken out.",
         "Take the break of ${hi20:.2f} on volume — not the anticipation of it.",
     ),
+    # chop is the catch-all: it fires at any range position when no earlier
+    # rule matched, so its copy must read correctly at the bottom, the middle
+    # and the top of the range. It states where the name sits and that nothing
+    # lines up — it must not assert "mid-range" or "drifting".
     ("call", "chop"): (
-        "Mid-range at <b>{pos:.0f}%</b> between ${lo20:.2f} and ${hi20:.2f}, "
-        "RSI {rsi:.0f}. Drifting, no momentum either way.",
-        "A clean break of ${hi20:.2f} would start something. Until then, "
+        "Sitting at <b>{pos:.0f}%</b> of its 20-day range, between ${lo20:.2f} "
+        "and ${hi20:.2f}, RSI {rsi:.0f}. Nothing in the trend, the range or the "
+        "momentum lines up into a call setup here.",
+        "A clean break of ${hi20:.2f} on volume would start something. Until then, "
         "no setup = no trade.",
     ),
     ("put", "over_budget"): (
@@ -290,17 +305,22 @@ TEMPLATES = {
         "It has to lose ${sma20:.2f} first. No short edge until then.",
     ),
     ("put", "chop"): (
-        "Mid-range at <b>{pos:.0f}%</b> between ${lo20:.2f} and ${hi20:.2f} — "
-        "two-sided, not breaking down.",
-        "No clean put edge here. A break of ${lo20:.2f} would change that.",
+        "Sitting at <b>{pos:.0f}%</b> of its 20-day range, between ${lo20:.2f} "
+        "and ${hi20:.2f}, RSI {rsi:.0f}. There's no breakdown underway to sell "
+        "into — the short conditions aren't lining up.",
+        "No clean put edge here. A decisive loss of ${lo20:.2f} would change "
+        "that — don't chase it before then.",
     ),
 }
 
 OVERLAY_TEMPLATES = {
+    # Cites iv_far, because iv_far is what _iv_is_rich() actually compared
+    # against realized. Quoting the short-dated print here would have the
+    # sentence justify the downgrade with a number that didn't cause it.
     "rich_iv": (
-        "One catch: premium's running about {iv:.0f}% against {rvol:.0f}% realized, so "
-        "you'd be paying up for the move. Right idea, rich price — wait for vol to cool "
-        "or spread it off.",
+        "One catch: month-out premium's running about {iv_far:.0f}% against "
+        "{rvol:.0f}% realized, so you'd be paying up for the move. Right idea, rich "
+        "price — wait for vol to cool or spread it off.",
     )[0],
 }
 
@@ -322,6 +342,7 @@ def _prose_values(direction, snap):
         # fail loudly during decide(), not silently render incorrect output.
         chg_1mo=(snap.get("chg_1mo") or 0.0),
         iv=(snap.get("iv") or 0.0) * 100.0,
+        iv_far=(snap.get("iv_far") or 0.0) * 100.0,
         rvol=(snap.get("rvol") or 0.0) * 100.0,
     )
     return values
