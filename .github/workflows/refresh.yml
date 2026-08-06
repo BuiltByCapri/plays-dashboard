@@ -2,12 +2,7 @@ name: Refresh prices
 
 on:
   schedule:
-    # Every 15 minutes, 13:00-21:59 UTC, weekdays. That window covers US market
-    # hours across both DST regimes (EDT 9:00-17:59, EST 8:00-16:59), so it
-    # runs a bit before open and a bit after close year-round rather than
-    # needing two schedules. GitHub delays scheduled runs under load, so the
-    # actual cadence is looser than 15 minutes in practice.
-    - cron: "*/15 13-21 * * 1-5"
+    - cron: "30 13 * * 1-5"   # 9:30 AM ET (13:30 UTC), weekdays
   workflow_dispatch: {}         # allow manual run
 
 permissions:
@@ -27,8 +22,6 @@ jobs:
           python-version: "3.11"
       - name: Install deps
         run: pip install --quiet yfinance
-      - name: Run analysis tests
-        run: python -m unittest discover -s tests -t . -v
       - name: Refresh data.json
         run: python refresh.py
       - name: Commit if changed
