@@ -47,6 +47,18 @@
   .read::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--wait)}
   .read .lab{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--wait)}
   .read p{font-size:14.5px;margin-top:5px}.read b{font-weight:600}
+  /* At-a-glance strip: one chip per name for the selected direction, so the
+     rating and the real contract cost are visible without scrolling. */
+  .strip{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 2px}
+  .schip{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;
+    background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);
+    font:inherit;font-size:12px;color:var(--ink);cursor:pointer;transition:transform .15s}
+  .schip:active{transform:scale(.97)}
+  .schip b{font-weight:700;letter-spacing:.01em}
+  .schip .lb{color:var(--ink-soft)}
+  .schip .ct{font-weight:600;font-variant-numeric:tabular-nums}
+  .schip .ct.over{color:var(--mute)}
+  .schip .pip{width:7px;height:7px;flex:none}
   .legend{display:flex;gap:14px;flex-wrap:wrap;margin:16px 2px 4px;font-size:11.5px;color:var(--ink-soft)}
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .pip{width:9px;height:9px;border-radius:50%}
@@ -142,6 +154,8 @@
     <span><i class="pip skip"></i> Skip</span><span><i class="pip mute"></i> Track only</span>
   </div>
 
+  <div class="strip" id="strip"></div>
+
   <div class="section-label" id="seclabel">Your 5 names</div>
   <div id="cards"></div>
 
@@ -205,13 +219,21 @@ function nearCost(d){
   if(typeof cost!=='number'||!(cost>0)) return null;
   return {cost, quoted: n[DIR+'_quoted']===true};
 }
+// The near contract's cost and whether it came from a real quote. Shared by
+// the card rows and the strip so the two can never show different prices for
+// the same contract — that split was a real bug once.
+function nearFig(d){
+  const q=nearCost(d), dte=dteOf(SHORT), K=Math.max(0.5,Math.round(d.spot));
+  return {cost: q?q.cost:bsPrice(DIR,d.spot,K,dte/365,ivFor(d,dte))*100,
+          quoted: !!(q&&q.quoted)};
+}
 function contractsFor(d){
   const K=Math.max(0.5,Math.round(d.spot));
   return [SHORT,MONTHLY].map((f,idx)=>{
     const dte=dteOf(f);
-    const q=idx?null:nearCost(d);
-    const cost=q?q.cost:bsPrice(DIR,d.spot,K,dte/365,ivFor(d,dte))*100;
-    const prem=cost/100, quoted=!!(q&&q.quoted);
+    const fig=idx?null:nearFig(d);
+    const cost=fig?fig.cost:bsPrice(DIR,d.spot,K,dte/365,ivFor(d,dte))*100;
+    const prem=cost/100, quoted=!!(fig&&fig.quoted);
     // A modelled cost gets a muted "est" badge, never a confident fit claim:
     // the fit badge is the most decision-relevant thing on the card and it may
     // only say the contract fits over a price someone will really trade at.
@@ -222,12 +244,30 @@ function contractsFor(d){
   });
 }
 
+function buildStrip(){
+  const el=document.getElementById('strip');
+  if(!el) return;
+  el.innerHTML=NAMES.map(d=>{
+    const dd=d[DIR], fig=nearFig(d);
+    const over=fig.cost>105;
+    const txt=(fig.quoted?'':'est ')+'$'+fig.cost.toFixed(0);
+    return `<button class="schip" data-sym="${d.sym}" aria-label="${d.sym} ${dd.vlabel}, ${txt}">
+      <b>${d.sym}</b><i class="pip ${dd.verdict==='mute'?'mute':dd.verdict}"></i>
+      <span class="lb">${dd.vlabel}</span><span class="ct${over?' over':''}">${txt}</span>
+    </button>`;
+  }).join('');
+  el.querySelectorAll('.schip').forEach(b=>b.addEventListener('click',()=>{
+    const card=document.getElementById('card-'+b.dataset.sym);
+    if(card) card.scrollIntoView({behavior:'smooth',block:'center'});
+  }));
+}
+
 function build(){
   cards.innerHTML='';
   NAMES.forEach((d,i)=>{
     const dd=d[DIR];                                   // direction-specific block
     const cts=contractsFor(d);
-    const c=document.createElement('div');c.className='card';c.style.animationDelay=(i*55)+'ms';
+    const c=document.createElement('div');c.className='card';c.id='card-'+d.sym;c.style.animationDelay=(i*55)+'ms';
     c.innerHTML=`
       <div class="top">
         <div class="tk"><span class="sym">${d.sym}</span><span class="co">${d.co}</span></div>
@@ -324,6 +364,7 @@ function setDir(dir){
     :"<b>This week's read didn't load.</b> The morning refresh may not have run — check the Refresh prices action on GitHub. Prices and verdicts below may be stale too.";
   document.getElementById('seclabel').textContent=(dir==='call'?'Long ideas':'Short ideas')+' · your 5 names';
   build();
+  buildStrip();
 }
 document.querySelectorAll('#toggle button').forEach(b=>b.addEventListener('click',()=>setDir(b.dataset.dir)));
 
