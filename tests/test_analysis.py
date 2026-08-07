@@ -404,11 +404,23 @@ def result(sym, verdict, rule_id="chop", vlabel="Watch", overlay=None):
 
 
 class TestWeeklyRead(unittest.TestCase):
-    def test_label_names_the_direction(self):
+    def test_label_names_the_expiry_when_given_one(self):
+        self.assertEqual(
+            analysis.summarize("call", [result("A", "wait")], expiry_label="Aug 14")[0],
+            "Calls · Aug 14 expiry")
+        self.assertEqual(
+            analysis.summarize("put", [result("A", "wait")], expiry_label="Aug 14")[0],
+            "Puts · Aug 14 expiry")
+
+    def test_label_falls_back_to_the_horizon_wording_without_an_expiry(self):
         self.assertEqual(analysis.summarize("call", [result("A", "wait")])[0],
                          "This week · calls")
         self.assertEqual(analysis.summarize("put", [result("A", "wait")])[0],
                          "This week · puts")
+
+    def test_expiry_label_does_not_leak_into_the_body(self):
+        _, html = analysis.summarize("call", [result("A", "wait")], expiry_label="Aug 14")
+        self.assertNotIn("Aug 14", html)
 
     def test_green_names_are_called_out_by_ticker(self):
         results = [result("SOUN", "go", "clean_setup"), result("HIMS", "wait")]

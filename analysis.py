@@ -393,15 +393,24 @@ def _join(syms):
     return ", ".join(syms[:-1]) + " &amp; " + syms[-1]
 
 
-def summarize(direction, results, stale=()):
-    """Assemble the week's read for one direction from all five verdicts.
+def summarize(direction, results, stale=(), expiry_label=None):
+    """Assemble the read for one direction from all five verdicts.
 
     `stale` lists symbols that failed to refresh this run and so are showing
     a verdict from an earlier one — kept deliberately, but named so the read
     doesn't silently imply every card on the board is current.
+
+    `expiry_label` is a pre-formatted date like "Aug 14" naming the near
+    expiry these verdicts are about. It arrives pre-formatted because this
+    module has no clock and no date library by design — refresh.py owns dates.
+    Without it the label falls back to the older horizon wording.
     """
     is_call = direction == "call"
-    label = "This week · " + ("calls" if is_call else "puts")
+    side_word = "Calls" if is_call else "Puts"
+    if expiry_label:
+        label = "%s · %s expiry" % (side_word, expiry_label)
+    else:
+        label = "This week · " + ("calls" if is_call else "puts")
     word = "call" if is_call else "put"
     side = "longs" if is_call else "shorts"
 

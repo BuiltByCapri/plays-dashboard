@@ -355,9 +355,23 @@ def main():
         print("Nothing refreshed — leaving data.json unchanged.", flush=True)
         sys.exit(0)
 
+    # Name the expiry these verdicts are about, read from what was actually
+    # published rather than recomputed — _nearest_expiry picks the nearest
+    # LISTED expiry, which is not today+near_dte in a holiday week. Dates live
+    # here, not in analysis.py, which stays clock-free.
+    expiry_label = None
+    for _n in data["names"]:
+        _e = (_n.get("near") or {}).get("expiry")
+        if _e:
+            _d = datetime.date.fromisoformat(_e)
+            expiry_label = "%s %d" % (_d.strftime("%b"), _d.day)
+            break
+
     data["reads"] = {
-        "call": analysis.summarize("call", results["call"], stale=stale),
-        "put": analysis.summarize("put", results["put"], stale=stale),
+        "call": analysis.summarize("call", results["call"], stale=stale,
+                                   expiry_label=expiry_label),
+        "put": analysis.summarize("put", results["put"], stale=stale,
+                                  expiry_label=expiry_label),
     }
     data["updated"] = today.isoformat()
     data["analysis_date"] = today.isoformat()
