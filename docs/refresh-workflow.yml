@@ -1,0 +1,51 @@
+# The intended contents of .github/workflows/refresh.yml
+#
+# GitHub blocks any repo-scoped credential from writing files under
+# .github/workflows/, so this is parked here instead. To apply it: open
+# .github/workflows/refresh.yml on github.com, select all, paste this in
+# (minus these comment lines), and commit.
+
+name: Refresh prices
+
+on:
+  schedule:
+    # Every 15 minutes, 13:00-21:59 UTC, weekdays. Matches Yahoo's ~15 minute
+    # data delay, so each run sees genuinely new numbers. The window covers US
+    # market hours in both DST regimes (EDT 9:00-17:59, EST 8:00-16:59).
+    # GitHub delays scheduled runs under load, so real cadence is a bit looser.
+    - cron: "*/15 13-21 * * 1-5"
+  workflow_dispatch: {}         # allow manual run
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install --quiet yfinance
+      - name: Run analysis tests
+        run: python -m unittest discover -s tests -t . -v
+      - name: Refresh data.json
+        run: python refresh.py
+      - name: Commit if changed
+        run: |
+          git config user.name "plays-bot"
+          git config user.email "actions@github.com"
+          if ! git diff --quiet data.json; then
+            git add data.json
+            git commit -m "chore: refresh ($(date -u +'%Y-%m-%d %H:%M UTC'))"
+            git push
+            echo "Pushed refreshed data."
+          else
+            echo "No changes."
+          fi
