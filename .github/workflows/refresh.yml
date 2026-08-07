@@ -2,7 +2,11 @@ name: Refresh prices
 
 on:
   schedule:
-    - cron: "30 13 * * 1-5"   # 9:30 AM ET (13:30 UTC), weekdays
+    # Every 15 minutes, 13:00-21:59 UTC, weekdays. Matches Yahoo's ~15 minute
+    # data delay, so each run sees genuinely new numbers. The window covers US
+    # market hours in both DST regimes (EDT 9:00-17:59, EST 8:00-16:59).
+    # GitHub delays scheduled runs under load, so real cadence is a bit looser.
+    - cron: "*/15 13-21 * * 1-5"
   workflow_dispatch: {}         # allow manual run
 
 permissions:
@@ -22,6 +26,8 @@ jobs:
           python-version: "3.11"
       - name: Install deps
         run: pip install --quiet yfinance
+      - name: Run analysis tests
+        run: python -m unittest discover -s tests -t . -v
       - name: Refresh data.json
         run: python refresh.py
       - name: Commit if changed
@@ -30,9 +36,9 @@ jobs:
           git config user.email "actions@github.com"
           if ! git diff --quiet data.json; then
             git add data.json
-            git commit -m "chore: daily price refresh ($(date -u +%Y-%m-%d))"
+            git commit -m "chore: refresh ($(date -u +'%Y-%m-%d %H:%M UTC'))"
             git push
-            echo "Pushed refreshed prices."
+            echo "Pushed refreshed data."
           else
-            echo "No price changes."
+            echo "No changes."
           fi
