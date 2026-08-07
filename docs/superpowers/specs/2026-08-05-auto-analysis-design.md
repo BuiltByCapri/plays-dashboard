@@ -248,10 +248,19 @@ Named at the top of `refresh.py`, since several are fitted judgments rather than
 derived facts:
 
 - `BUDGET = 100` — the dollar budget the dashboard is built around.
-- `BUDGET_MULTIPLE = 3` — how far over budget a contract must be before the name is
-  demoted to "Track only". Set to 3 because it reproduces the current hand-made calls:
-  ELF's near-dated ATM costs $597 (6× budget, muted) while HIMS costs $240 (2.4×, still
-  tradeable). This is a fitted threshold, not a derived one.
+- `BUDGET_MULTIPLE = 1` — how far over budget the ATM contract may cost before
+  the name is demoted to "Track only". **Tightened from 3 to 1 on 2026-08-07.**
+  It was originally 3 because that reproduced the hand-written ratings it
+  replaced (ELF muted, HIMS tradeable) — but those ratings were the artifact,
+  not the requirement. The maintainer's actual constraint is a $100 budget, and
+  at 3 the board was spending two of its five slots rating contracts she could
+  not buy: HIMS at $234 and ELF at $298, the latter clearing the old $300 gate
+  by two dollars. At 1 the gate means what it says.
+
+  The cost compared is the **at-the-money** contract, which is the most
+  expensive strike she would realistically buy — so a muted name may still have
+  an affordable out-of-the-money strike. The analyzer prices any strike she
+  types, so nothing is hidden; the gate only decides what gets a rating.
 - `RICH_IV_MULTIPLE = 1.35` — how far implied must exceed realized before the premium
   counts as rich and a `go` is downgraded. Still a starting value, not a measured one.
   It is a *judgment* about price, not a data-quality filter, so the failure that killed

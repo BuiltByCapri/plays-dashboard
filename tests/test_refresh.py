@@ -56,8 +56,15 @@ class TestPriced(unittest.TestCase):
         priced = refresh._priced("call", quote, spot, dte, iv)
 
         self.assertAlmostEqual(priced, analysis.quote_cost(5.80, 8.10))
-        self.assertLess(bs_cost, analysis.BUDGET * analysis.BUDGET_MULTIPLE)
-        self.assertGreater(priced, analysis.BUDGET * analysis.BUDGET_MULTIPLE)
+
+        # Pinned to the gate in force when this shipped ($300), not the live
+        # constant. The defect is the 4x gap between the model and the market,
+        # which fools any gate between them — true regardless of how the
+        # threshold is tuned later.
+        LEGACY_GATE = 300.0
+        self.assertLess(bs_cost, LEGACY_GATE)
+        self.assertGreater(priced, LEGACY_GATE)
+        self.assertGreater(priced, bs_cost * 4)
 
 
 class TestResolveIv(unittest.TestCase):

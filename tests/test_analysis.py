@@ -146,8 +146,16 @@ class TestVerdicts(unittest.TestCase):
         its own, cheaper estimate."""
         bs_cost = analysis.contract_cost("call", 86.37, 2, 0.535)
         quote_cost = analysis.quote_cost(5.80, 8.10)  # ELF's real near-dated quote
-        self.assertLess(bs_cost, analysis.BUDGET * analysis.BUDGET_MULTIPLE)
-        self.assertGreater(quote_cost, analysis.BUDGET * analysis.BUDGET_MULTIPLE)
+        # Pinned to the gate that was in force when this bug shipped ($300),
+        # not to the live constant. The defect is that the model priced the
+        # contract at roughly a quarter of its real cost, so ANY gate between
+        # the two values would be fooled — that stays true however the current
+        # threshold is tuned, and this test should not start passing
+        # vacuously just because the gate moved.
+        LEGACY_GATE = 300.0
+        self.assertLess(bs_cost, LEGACY_GATE)
+        self.assertGreater(quote_cost, LEGACY_GATE)
+        self.assertGreater(quote_cost, bs_cost * 4)
 
         d = analysis.decide("call", snap(
             spot=86.37, sma20=79.27, sma50=69.20, rsi=69.3, pos=90.6,

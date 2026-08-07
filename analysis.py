@@ -17,7 +17,12 @@ from collections import namedtuple
 # --- constants -------------------------------------------------------------
 # Fitted judgments, not derived facts. See the spec for why each is set here.
 BUDGET = 100.0            # the dollar budget the dashboard is built around
-BUDGET_MULTIPLE = 3.0     # over this multiple of budget, a name is "Track only"
+BUDGET_MULTIPLE = 1.0     # over this multiple of budget, a name is "Track only".
+                          # 1.0 = the ATM contract must actually fit BUDGET.
+                          # Was 3.0, fitted to reproduce the old hand-written
+                          # ratings; tightened 2026-08-07 on the maintainer's
+                          # call that a contract she cannot buy should not be
+                          # rated at all.
 RICH_IV_MULTIPLE = 1.35   # implied over realized by this much = rich premium
 MIN_OPEN_INTEREST = 10    # below this, an option quote is a dead market
 MAX_SPREAD_RATIO = 0.5    # (ask-bid)/mid above this means the quote isn't trustworthy
