@@ -205,6 +205,11 @@ def _call_rule(s):
         return Decision("go", "Looks solid", "clean_setup", None)
     if hi20 > 0 and (hi20 - spot) / hi20 * 100.0 <= 3.0 and sma20 >= sma50 and rsi_v < 70.0:
         return Decision("wait", "Watch", "breakout_pending", None)
+    if pos >= 97.0:
+        # At the very top of the range, but the averages have not turned up
+        # (breakout_pending would have caught that) and RSI is not stretched
+        # (extended would have). Strength without trend confirmation.
+        return Decision("wait", "At highs", "at_range_high", None)
     return Decision("wait", "Watch", "chop", None)
 
 
@@ -218,6 +223,10 @@ def _put_rule(s):
         return Decision("go", "Looks solid", "breakdown", None)
     if spot > sma20 > sma50:
         return Decision("skip", "Skip", "no_short_edge", None)
+    if pos <= 3.0:
+        # Pinned to the bottom of the range. washed_out already took the
+        # oversold case, so there is no fresh level left below to break.
+        return Decision("skip", "At lows", "at_range_low", None)
     return Decision("skip", "Skip", "chop", None)
 
 
@@ -282,6 +291,13 @@ TEMPLATES = {
         "A clean break of ${hi20:.2f} on volume would start something. Until then, "
         "no setup = no trade.",
     ),
+    ("call", "at_range_high"): (
+        "Right at the top of its 20-day range (<b>{pos:.0f}%</b>), RSI {rsi:.0f} — "
+        "but the 20-day average (${sma20:.2f}) is still under the 50-day "
+        "(${sma50:.2f}). Strength without the trend behind it yet.",
+        "Wants the averages to turn and a hold above ${sma20:.2f}. Buying a high "
+        "the trend hasn't confirmed is a coin flip.",
+    ),
     ("put", "over_budget"): (
         "An ATM put runs about <b>${cost:.0f}</b> — {mult:.1f}× the ${budget:.0f} "
         "you're working with. Can't express it at this size.",
@@ -310,6 +326,13 @@ TEMPLATES = {
         "into — the short conditions aren't lining up.",
         "No clean put edge here. A decisive loss of ${lo20:.2f} would change "
         "that — don't chase it before then.",
+    ),
+    ("put", "at_range_low"): (
+        "Pinned to the bottom of its 20-day range (<b>{pos:.0f}%</b>), RSI "
+        "{rsi:.0f}. The easy part of the move is behind it and there's no fresh "
+        "level left underneath to break.",
+        "A bounce that fails near ${sma20:.2f} is a cleaner short than selling "
+        "the low. Don't add down here.",
     ),
 }
 

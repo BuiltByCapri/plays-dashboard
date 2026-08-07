@@ -552,3 +552,48 @@ class TestSnapshotIntegration(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRangeExtremes(unittest.TestCase):
+    """The catch-all used to tell you to wait for a level you were already at."""
+
+    def test_call_at_range_high_without_trend_gets_its_own_rule(self):
+        s = snap(spot=7.16, sma20=6.80, sma50=7.00, pos=100.0, rsi=63.0,
+                 hi20=7.16, lo20=5.70)
+        d = analysis.decide("call", s)
+        self.assertEqual(d.rule_id, "at_range_high")
+        self.assertEqual(d.verdict, "wait")
+
+    def test_at_range_high_prose_does_not_await_the_current_price(self):
+        s = snap(spot=7.16, sma20=6.80, sma50=7.00, pos=100.0, rsi=63.0,
+                 hi20=7.16, lo20=5.70)
+        d = analysis.decide("call", s)
+        blob = " ".join(t for _, t in analysis.render("call", d, s))
+        self.assertNotIn("break of $7.16", blob)
+        self.assertIn("6.80", blob)
+
+    def test_breakout_pending_still_wins_when_the_trend_has_turned(self):
+        s = snap(spot=7.16, sma20=7.00, sma50=6.80, pos=100.0, rsi=63.0, hi20=7.16)
+        self.assertEqual(analysis.decide("call", s).rule_id, "breakout_pending")
+
+    def test_extended_still_wins_when_overbought(self):
+        s = snap(spot=7.16, sma20=6.80, sma50=7.00, pos=100.0, rsi=76.0, hi20=7.16)
+        self.assertEqual(analysis.decide("call", s).rule_id, "extended")
+
+    def test_put_at_range_low_gets_its_own_rule(self):
+        s = snap(spot=5.70, sma20=6.50, sma50=6.20, pos=0.0, rsi=38.0,
+                 hi20=7.16, lo20=5.70)
+        d = analysis.decide("put", s)
+        self.assertEqual(d.rule_id, "at_range_low")
+        self.assertEqual(d.verdict, "skip")
+
+    def test_washed_out_still_wins_when_oversold(self):
+        s = snap(spot=5.70, sma20=6.50, sma50=6.20, pos=0.0, rsi=25.0, lo20=5.70)
+        self.assertEqual(analysis.decide("put", s).rule_id, "washed_out")
+
+    def test_both_new_templates_render_without_placeholders(self):
+        for direction, rule in (("call", "at_range_high"), ("put", "at_range_low")):
+            d = analysis.Decision("wait", "x", rule, None)
+            why = analysis.render(direction, d, snap())
+            self.assertEqual(len(why), 2)
+            self.assertNotIn("{", why[0][1] + why[1][1])
