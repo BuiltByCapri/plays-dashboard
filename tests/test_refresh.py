@@ -333,9 +333,17 @@ class TestPageContract(unittest.TestCase):
         nearCost returns null, contractsFor takes the Black-Scholes path, and
         `quoted` is false — so the badge is `na`/`est`, never "fits $100"."""
         self.assertIn("return null", self._fn("function nearCost("))
-        # null from nearCost => model price and quoted=false
-        self.assertIn("const cost=q?q.cost:bsPrice(", self.src)
-        self.assertIn("quoted=!!(q&&q.quoted)", self.src)
+        # null from nearCost => model price and quoted=false. Asserted on the
+        # shared helper rather than a literal line of contractsFor, so renaming
+        # a local can't fail the build while the behaviour is unchanged.
+        near_fig = self._fn("function nearFig(")
+        self.assertIn("nearCost(d)", near_fig)
+        self.assertIn("bsPrice(", near_fig)
+        self.assertIn("quoted: !!(q&&q.quoted)", near_fig)
+        # contractsFor must take its near-row figure from that helper rather
+        # than recomputing one, so the row and the strip can never disagree.
+        contracts = self._fn("function contractsFor(")
+        self.assertIn("nearFig(d)", contracts)
 
     def test_unquoted_rows_do_not_claim_a_fit(self):
         """"fits $100" may only appear on a branch gated by `quoted`."""
