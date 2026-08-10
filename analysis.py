@@ -203,7 +203,7 @@ def _call_rule(s):
     pos, rsi_v, hi20 = s["pos"], s["rsi"], s["hi20"]
 
     if pos >= 90.0 and rsi_v >= 70.0:
-        return Decision("skip", "Extended", "extended", None)
+        return Decision("skip", "Too hot", "extended", None)
     if spot < sma20 < sma50 and pos <= 25.0:
         return Decision("wait", "No base", "no_base", None)
     if spot > sma20 and sma20 >= sma50 and 55.0 <= pos <= 85.0 and 50.0 <= rsi_v <= 68.0:
