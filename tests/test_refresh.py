@@ -8,10 +8,13 @@ and dict/tuple fixtures — no network, no pandas, no yfinance required.
 import json
 import os
 import re
+import datetime
 import unittest
 
 import analysis
 import refresh
+
+TODAY = datetime.date(2026, 8, 10)
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -142,7 +145,7 @@ class TestApplySnapshot(unittest.TestCase):
         for the row — ELF's card said $695 in prose above a row reading ~$572.
         """
         name = {"sym": "ELF", "yf": "ELF"}
-        refresh.apply_snapshot(name, _snap())
+        refresh.apply_snapshot(name, _snap(), TODAY)
         self.assertEqual(name["near"]["expiry"], "2026-08-07")
         self.assertEqual(name["near"]["dte"], 2)
         self.assertAlmostEqual(name["near"]["call_cost"], 695.0)
@@ -158,7 +161,7 @@ class TestApplySnapshot(unittest.TestCase):
         so the flag that lets the page decline that badge must be published."""
         name = {"sym": "ODD", "yf": "ODD"}
         refresh.apply_snapshot(name, _snap(sym="ODD", call_quoted=False,
-                                          put_quoted=False, call_cost=45.0))
+                                          put_quoted=False, call_cost=45.0), TODAY)
         self.assertFalse(name["near"]["call_quoted"])
         self.assertFalse(name["near"]["put_quoted"])
         self.assertAlmostEqual(name["near"]["call_cost"], 45.0)
@@ -167,13 +170,13 @@ class TestApplySnapshot(unittest.TestCase):
         name = {"sym": "ELF", "yf": "ELF",
                 "anchor": {"K": 50, "dte": 8, "prem": 3.55},
                 "anchorF": {"dte": 36, "prem": 6.63}}
-        refresh.apply_snapshot(name, _snap())
+        refresh.apply_snapshot(name, _snap(), TODAY)
         self.assertNotIn("anchor", name)
         self.assertNotIn("anchorF", name)
 
     def test_publishes_both_iv_terms(self):
         name = {"sym": "ELF", "yf": "ELF"}
-        refresh.apply_snapshot(name, _snap(iv=0.61, iv_far=0.535))
+        refresh.apply_snapshot(name, _snap(iv=0.61, iv_far=0.535), TODAY)
         self.assertAlmostEqual(name["ivNear"], 0.61)
         self.assertAlmostEqual(name["ivFar"], 0.535)
 
@@ -356,3 +359,35 @@ class TestPageContract(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestVerdictSince(unittest.TestCase):
+    def test_a_changed_verdict_is_stamped_and_reported(self):
+        name = {"sym": "HIMS", "yf": "HIMS",
+                "call": {"verdict": "wait", "vlabel": "Watch", "since": "2026-08-05"}}
+        _, moved = refresh.apply_snapshot(name, _snap(call_cost=900.0), TODAY)
+        self.assertIn("call", moved)
+        self.assertEqual(name["call"]["verdict"], "mute")
+        self.assertEqual(name["call"]["since"], TODAY.isoformat())
+
+    def test_an_unchanged_verdict_keeps_its_original_date(self):
+        name = {"sym": "ELF", "yf": "ELF",
+                "call": {"verdict": "mute", "vlabel": "Track only", "since": "2026-08-05"}}
+        _, moved = refresh.apply_snapshot(name, _snap(call_cost=900.0), TODAY)
+        self.assertNotIn("call", moved)
+        self.assertEqual(name["call"]["since"], "2026-08-05")
+
+    def test_a_first_run_is_not_reported_as_a_change(self):
+        name = {"sym": "NEW", "yf": "NEW"}
+        _, moved = refresh.apply_snapshot(name, _snap(), TODAY)
+        self.assertEqual(moved, [])
+        self.assertEqual(name["call"]["since"], TODAY.isoformat())
+
+    def test_an_unchanged_verdict_with_no_history_is_not_stamped(self):
+        """Adding `since` to a payload that lacks it must not report every
+        name as having moved on that first run."""
+        name = {"sym": "ELF", "yf": "ELF",
+                "call": {"verdict": "mute", "vlabel": "Track only"}}
+        _, moved = refresh.apply_snapshot(name, _snap(call_cost=900.0), TODAY)
+        self.assertEqual(moved, [])
+        self.assertNotIn("since", name["call"])

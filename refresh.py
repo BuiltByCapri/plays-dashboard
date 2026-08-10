@@ -258,8 +258,13 @@ def build_snapshot(name, closes, near_dte):
     }
 
 
-def apply_snapshot(name, snap):
-    """Write price fields and generated analysis back onto one name."""
+def apply_snapshot(name, snap, today):
+    """Write price fields and generated analysis back onto one name.
+
+    Returns (decisions, moved) where `moved` lists the directions whose verdict
+    class changed today. Each verdict carries a `since` date so a change stays
+    reported for the rest of the day rather than only on the run that made it.
+    """
     spot, pct = snap["spot"], snap["chg_1mo"]
     name["price"] = "$%.2f" % spot
     name["spot"] = round(spot, 2)
@@ -292,15 +297,30 @@ def apply_snapshot(name, snap):
     name.pop("anchorF", None)
 
     decisions = {}
+    moved = []
     for direction in ("call", "put"):
         d = analysis.decide(direction, snap)
         decisions[direction] = d
+        prev = (name.get(direction) or {})
+        # Only a change of verdict class counts. vlabel moves within a class
+        # ("Watch" to "At highs") are not worth announcing.
+        if prev.get("verdict") == d.verdict:
+            # Carry the existing date forward. Left absent when there is none,
+            # rather than stamped with today, which would report every name as
+            # having moved on the first run that adds this field.
+            since = prev.get("since")
+        else:
+            since = today.isoformat()
+            if prev.get("verdict"):
+                moved.append(direction)
         name[direction] = {
             "verdict": d.verdict,
             "vlabel": d.vlabel,
             "why": analysis.render(direction, d, snap),
         }
-    return decisions
+        if since:
+            name[direction]["since"] = since
+    return decisions, moved
 
 
 def main():
@@ -318,6 +338,7 @@ def main():
     now_utc = datetime.datetime.now(datetime.timezone.utc)
 
     results = {"call": [], "put": []}
+    changed = {"call": [], "put": []}
     refreshed = 0
     stale = []
 
@@ -335,8 +356,10 @@ def main():
             stale.append(name["sym"])
             continue
 
-        decisions = apply_snapshot(name, snap)
+        decisions, moved = apply_snapshot(name, snap, today)
         refreshed += 1
+        for direction in moved:
+            changed[direction].append((name["sym"], decisions[direction].verdict))
         for direction in ("call", "put"):
             results[direction].append({"sym": name["sym"],
                                        "decision": decisions[direction]})
@@ -352,7 +375,7 @@ def main():
                   decisions["put"].verdict, decisions["put"].rule_id), flush=True)
 
     if not refreshed:
-        print("Nothing refreshed — leaving data.json unchanged.", flush=True)
+        print("Nothing refreshed, leaving data.json unchanged.", flush=True)
         sys.exit(0)
 
     # Name the expiry these verdicts are about, read from what was actually
@@ -367,11 +390,23 @@ def main():
             expiry_label = "%s %d" % (_d.strftime("%b"), _d.day)
             break
 
+    # Anything whose verdict changed at any point today, not just on this run,
+    # so a move made at the open is still reported in the afternoon.
+    for _n in data["names"]:
+        for _dir in ("call", "put"):
+            _b = _n.get(_dir) or {}
+            if _b.get("since") == today.isoformat():
+                _entry = (_n["sym"], _b.get("verdict"))
+                if _entry not in changed[_dir]:
+                    changed[_dir].append(_entry)
+
     data["reads"] = {
         "call": analysis.summarize("call", results["call"], stale=stale,
-                                   expiry_label=expiry_label),
+                                   expiry_label=expiry_label,
+                                   changes=changed["call"]),
         "put": analysis.summarize("put", results["put"], stale=stale,
-                                  expiry_label=expiry_label),
+                                  expiry_label=expiry_label,
+                                  changes=changed["put"]),
     }
     data["updated"] = today.isoformat()
     data["analysis_date"] = today.isoformat()

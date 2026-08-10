@@ -152,7 +152,7 @@ def quote_is_liquid(bid, ask, open_interest):
     looks. Above that floor, the spread just needs to be tight by *either*
     measure: a small ratio to the mid (MAX_SPREAD_RATIO), or a small number of
     cents (MAX_ABS_SPREAD). The ratio alone would reject a 12-cent spread on an
-    18-cent option as "67% wide" even with thousands of contracts open — that's
+    18-cent option as "67% wide" even with thousands of contracts open, that's
     a one-cent-tick artifact of a cheap contract, not a bad fill, and the
     absolute-cents test catches it.
     """
@@ -258,7 +258,7 @@ def decide(direction, snap):
 # the price moves, which is the bug this whole module exists to kill.
 TEMPLATES = {
     ("call", "over_budget"): (
-        "An ATM contract runs about <b>${cost:.0f}</b> — {mult:.1f}× the ${budget:.0f} "
+        "An ATM contract runs about <b>${cost:.0f}</b>, {mult:.1f}× the ${budget:.0f} "
         "you're working with. The setup doesn't matter if you can't buy it.",
         "Tracking only. Shares or a spread are the way in here, not a straight call.",
     ),
@@ -272,18 +272,18 @@ TEMPLATES = {
         "Under both averages (${sma20:.2f} / ${sma50:.2f}) and sitting at "
         "<b>{pos:.0f}%</b> of its range, RSI {rsi:.0f}. Still falling, no buyer "
         "showing up yet.",
-        "A real base plus a reclaim of ${sma20:.2f} on volume. Not yet — don't catch it.",
+        "A real base plus a reclaim of ${sma20:.2f} on volume. Not yet. Don't catch it.",
     ),
     ("call", "clean_setup"): (
         "Above the 20-day (${sma20:.2f}) with the longer trend behind it, "
         "<b>{pos:.0f}%</b> of range, RSI {rsi:.0f}. That's a real setup, not a hope.",
-        "Wants to hold ${sma20:.2f}. Lose that and the setup's void — that's your line, "
+        "Wants to hold ${sma20:.2f}. Lose that and the setup's void. That's your line, "
         "not a feeling.",
     ),
     ("call", "breakout_pending"): (
         "Pressing the 20-day high at <b>${hi20:.2f}</b>, about {dist_hi:.1f}% away, "
         "with the trend up and RSI {rsi:.0f}. Coiled, not broken out.",
-        "Take the break of ${hi20:.2f} on volume — not the anticipation of it.",
+        "Take the break of ${hi20:.2f} on volume, not the anticipation of it.",
     ),
     # chop is the catch-all: it fires at any range position when no earlier
     # rule matched, so its copy must read correctly at the bottom, the middle
@@ -297,27 +297,27 @@ TEMPLATES = {
         "no setup = no trade.",
     ),
     ("call", "at_range_high"): (
-        "Right at the top of its 20-day range (<b>{pos:.0f}%</b>), RSI {rsi:.0f} — "
+        "Right at the top of its 20-day range (<b>{pos:.0f}%</b>), RSI {rsi:.0f}, "
         "but the 20-day average (${sma20:.2f}) is still under the 50-day "
         "(${sma50:.2f}). Strength without the trend behind it yet.",
         "Wants the averages to turn and a hold above ${sma20:.2f}. Buying a high "
         "the trend hasn't confirmed is a coin flip.",
     ),
     ("put", "over_budget"): (
-        "An ATM put runs about <b>${cost:.0f}</b> — {mult:.1f}× the ${budget:.0f} "
+        "An ATM put runs about <b>${cost:.0f}</b>, {mult:.1f}× the ${budget:.0f} "
         "you're working with. Can't express it at this size.",
         "Tracking only. Nothing to do on the short side at this price.",
     ),
     ("put", "washed_out"): (
         "Already down at <b>{pos:.0f}%</b> of its 20-day range with RSI {rsi:.0f}. "
-        "Puts were the trade getting here — the easy down-money is spent.",
+        "Puts were the trade getting here. The easy down-money is spent.",
         "A failed bounce into ${sma20:.2f} is a cleaner short than chasing fresh lows. "
         "Shorting down here is late.",
     ),
     ("put", "breakdown"): (
         "Under both averages (${sma20:.2f} / ${sma50:.2f}) at <b>{pos:.0f}%</b> of "
         "range, RSI {rsi:.0f}. Breaking down with room left toward ${lo20:.2f}.",
-        "Void if it reclaims ${sma20:.2f}. That's the stop — set it before you're in, "
+        "Void if it reclaims ${sma20:.2f}. That's the stop. Set it before you're in, "
         "not after.",
     ),
     ("put", "no_short_edge"): (
@@ -328,9 +328,9 @@ TEMPLATES = {
     ("put", "chop"): (
         "Sitting at <b>{pos:.0f}%</b> of its 20-day range, between ${lo20:.2f} "
         "and ${hi20:.2f}, RSI {rsi:.0f}. There's no breakdown underway to sell "
-        "into — the short conditions aren't lining up.",
+        "into, the short conditions aren't lining up.",
         "No clean put edge here. A decisive loss of ${lo20:.2f} would change "
-        "that — don't chase it before then.",
+        "that, don't chase it before then.",
     ),
     ("put", "at_range_low"): (
         "Pinned to the bottom of its 20-day range (<b>{pos:.0f}%</b>), RSI "
@@ -348,7 +348,7 @@ OVERLAY_TEMPLATES = {
     "rich_iv": (
         "One catch: month-out premium's running about {iv_far:.0f}% against "
         "{rvol:.0f}% realized, so you'd be paying up for the move. Right idea, rich "
-        "price — wait for vol to cool or spread it off.",
+        "price, wait for vol to cool or spread it off.",
     )[0],
 }
 
@@ -390,7 +390,7 @@ def render(direction, decision, snap):
 
 # --- 4. the weekly read ----------------------------------------------------
 def _join(syms):
-    """'A', 'A & B', or 'A, B & C' — Oxford-free, HTML-escaped."""
+    """'A', 'A & B', or 'A, B & C', Oxford-free, HTML-escaped."""
     if not syms:
         return ""
     if len(syms) == 1:
@@ -398,12 +398,17 @@ def _join(syms):
     return ", ".join(syms[:-1]) + " &amp; " + syms[-1]
 
 
-def summarize(direction, results, stale=(), expiry_label=None):
+def summarize(direction, results, stale=(), expiry_label=None, changes=()):
     """Assemble the read for one direction from all five verdicts.
 
     `stale` lists symbols that failed to refresh this run and so are showing
     a verdict from an earlier one — kept deliberately, but named so the read
     doesn't silently imply every card on the board is current.
+
+    `changes` lists names whose verdict class moved today, as (sym, verdict)
+    pairs. The read leads with those, because a board where nothing has set up
+    produces a near-identical sentence every run and looks stale even when the
+    picture underneath has shifted.
 
     `expiry_label` is a pre-formatted date like "Aug 14" naming the near
     expiry these verdicts are about. It arrives pre-formatted because this
@@ -433,19 +438,32 @@ def summarize(direction, results, stale=(), expiry_label=None):
     wait_only = [s for s in wait if s not in rich_set]
 
     parts = []
+
+    # What moved today comes first. Without it, a quiet board reads the same
+    # every run even when names have changed category underneath.
+    moved_out = [s for s, v in changes if v == "mute"]
+    moved_go = [s for s, v in changes if v == "go"]
+    moved_other = [s for s, v in changes if v not in ("mute", "go")]
+    if moved_go:
+        parts.append("<b>%s set up today.</b>" % _join(moved_go))
+    if moved_out:
+        parts.append("<b>%s moved out of range today.</b>" % _join(moved_out))
+    if moved_other and not (moved_go or moved_out):
+        parts.append("<b>%s changed today.</b>" % _join(moved_other))
+
     if go:
         parts.append("<b>%s %s the clean %s%s.</b>" % (
             _join(go), "is" if len(go) == 1 else "are", word,
             "" if len(go) == 1 else "s"))
     elif rich:
-        parts.append("<b>Nothing clean at these prices.</b> The %s setup's there — the premium isn't." % word
+        parts.append("<b>Nothing clean at these prices.</b> The %s setup's there, the premium isn't." % word
                      if len(rich) == 1 else
-                     "<b>Nothing clean at these prices.</b> The %s setups are there — the premiums aren't." % word)
+                     "<b>Nothing clean at these prices.</b> The %s setups are there, the premiums aren't." % word)
     else:
         parts.append("<b>Quiet for %s.</b> Nothing's a clean %s right now." % (side, word))
 
     if rich:
-        parts.append("%s %s the setup but the premium's rich — right idea, wrong price." % (
+        parts.append("%s %s the setup but the premium's rich, right idea, wrong price." % (
             _join(rich), "has" if len(rich) == 1 else "have"))
 
     if skip:
@@ -457,11 +475,11 @@ def summarize(direction, results, stale=(), expiry_label=None):
             _join(wait_only), "is" if len(wait_only) == 1 else "are"))
 
     if mute:
-        parts.append("%s %s priced past the $%.0f budget — tracking only." % (
+        parts.append("%s %s priced past the $%.0f budget, tracking only." % (
             _join(mute), "is" if len(mute) == 1 else "are", BUDGET))
 
     if stale:
-        parts.append("%s didn't refresh today — %s rating below is from an earlier run." % (
+        parts.append("%s didn't refresh today, %s rating below is from an earlier run." % (
             _join(list(stale)), "its" if len(stale) == 1 else "their"))
 
     parts.append("No setup = no trade." if is_call

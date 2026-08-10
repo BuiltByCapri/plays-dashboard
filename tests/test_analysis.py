@@ -617,3 +617,42 @@ class TestRangeExtremes(unittest.TestCase):
             why = analysis.render(direction, d, snap())
             self.assertEqual(len(why), 2)
             self.assertNotIn("{", why[0][1] + why[1][1])
+
+
+class TestChangeReporting(unittest.TestCase):
+    """A board where nothing sets up reads the same every run. What moved has
+    to come first, or the page looks stale while the picture underneath moves."""
+
+    def test_a_name_moving_out_of_range_leads_the_read(self):
+        results = [result("SOUN", "wait"), result("HIMS", "mute", "over_budget", "Track only")]
+        _, html = analysis.summarize("call", results, changes=[("HIMS", "mute")])
+        self.assertTrue(html.startswith("<b>HIMS moved out of range today.</b>"))
+
+    def test_a_setup_beats_a_price_move_for_the_lead(self):
+        results = [result("SOUN", "go", "clean_setup"), result("HIMS", "mute", "over_budget")]
+        _, html = analysis.summarize("call", results,
+                                     changes=[("HIMS", "mute"), ("SOUN", "go")])
+        self.assertTrue(html.startswith("<b>SOUN set up today.</b>"))
+        self.assertIn("HIMS moved out of range today", html)
+
+    def test_no_changes_means_no_lead_sentence(self):
+        results = [result("SOUN", "wait"), result("HIMS", "wait")]
+        _, html = analysis.summarize("call", results)
+        self.assertNotIn("today.", html)
+        self.assertTrue(html.startswith("<b>Quiet for longs."))
+
+    def test_generated_text_carries_no_em_dashes(self):
+        """Em dashes read as assistant-written. None may reach the page."""
+        results = [result("SOUN", "go", "clean_setup"), result("ODD", "skip"),
+                   result("HIMS", "mute", "over_budget"),
+                   result("AI", "wait", "clean_setup", "Rich", overlay="rich_iv")]
+        for direction in ("call", "put"):
+            _, html = analysis.summarize(direction, results, stale=["ELF"],
+                                         expiry_label="Aug 14",
+                                         changes=[("SOUN", "go")])
+            self.assertNotIn("—", html)
+        for pair in analysis.TEMPLATES.values():
+            for text in pair:
+                self.assertNotIn("—", text)
+        for text in analysis.OVERLAY_TEMPLATES.values():
+            self.assertNotIn("—", text)
