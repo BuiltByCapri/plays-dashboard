@@ -91,7 +91,7 @@
         "why": [
           [
             "The read",
-            "An ATM contract runs about <b>$116</b>, 1.2× the $100 you're working with. The setup doesn't matter if you can't buy it."
+            "An ATM contract runs about <b>$110</b>, 1.1× the $100 you're working with. The setup doesn't matter if you can't buy it."
           ],
           [
             "Watch for",
@@ -119,7 +119,7 @@
       "near": {
         "expiry": "2026-08-14",
         "dte": 3,
-        "call_cost": 116.5,
+        "call_cost": 110.0,
         "put_cost": 103.0,
         "call_quoted": true,
         "put_quoted": true
@@ -319,5 +319,5 @@
       "<b>HIMS moved out of range today.</b> <b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, AI &amp; ODD have no edge on this side. HIMS &amp; ELF are priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-08-11T20:24:04+00:00"
+  "updated_at": "2026-08-11T21:21:25+00:00"
 }
