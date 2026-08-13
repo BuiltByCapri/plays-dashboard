@@ -194,12 +194,12 @@
       "yf": "ODD",
       "price": "$13.33",
       "spot": 13.33,
-      "chg": "−18.5% · 1mo",
+      "chg": "−23.5% · 1mo",
       "dir": "down",
       "levels": [
         [
           "Support",
-          "$12.68"
+          "$12.48"
         ],
         [
           "Resistance",
@@ -207,7 +207,7 @@
         ],
         [
           "In range",
-          "15%"
+          "19%"
         ]
       ],
       "call": {
@@ -216,7 +216,7 @@
         "why": [
           [
             "The read",
-            "Sitting at <b>15%</b> of its 20-day range, between $12.68 and $16.99, RSI 39. Nothing in the trend, the range or the momentum lines up into a call setup here."
+            "Sitting at <b>19%</b> of its 20-day range, between $12.48 and $16.99, RSI 40. Nothing in the trend, the range or the momentum lines up into a call setup here."
           ],
           [
             "Watch for",
@@ -230,21 +230,21 @@
         "why": [
           [
             "The read",
-            "Sitting at <b>15%</b> of its 20-day range, between $12.68 and $16.99, RSI 39. There's no breakdown underway to sell into, the short conditions aren't lining up."
+            "Sitting at <b>19%</b> of its 20-day range, between $12.48 and $16.99, RSI 40. There's no breakdown underway to sell into, the short conditions aren't lining up."
           ],
           [
             "Watch for",
-            "No clean put edge here. A decisive loss of $12.68 would change that, don't chase it before then."
+            "No clean put edge here. A decisive loss of $12.48 would change that, don't chase it before then."
           ]
         ]
       },
-      "ivNear": 0.877,
-      "ivFar": 0.877,
+      "ivNear": 0.866,
+      "ivFar": 0.866,
       "near": {
         "expiry": "2026-08-14",
         "dte": 1,
-        "call_cost": 44.21,
-        "put_cost": 11.07,
+        "call_cost": 43.95,
+        "put_cost": 10.81,
         "call_quoted": false,
         "put_quoted": false
       }
@@ -323,5 +323,5 @@
       "<b>ELF moved out of range today.</b> <b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, HIMS, AI &amp; ODD have no edge on this side. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-08-13T21:14:20+00:00"
+  "updated_at": "2026-08-13T22:05:23+00:00"
 }
