@@ -115,13 +115,13 @@
         ],
         "since": "2026-08-12"
       },
-      "ivNear": 0.67,
+      "ivNear": 0.667,
       "ivFar": 0.742,
       "near": {
         "expiry": "2026-08-14",
         "dte": 1,
-        "call_cost": 39.5,
-        "put_cost": 58.5,
+        "call_cost": 36.5,
+        "put_cost": 59.0,
         "call_quoted": true,
         "put_quoted": true
       }
@@ -182,7 +182,7 @@
       "near": {
         "expiry": "2026-08-14",
         "dte": 1,
-        "call_cost": 27.5,
+        "call_cost": 27.0,
         "put_cost": 7.0,
         "call_quoted": true,
         "put_quoted": true
@@ -323,5 +323,5 @@
       "<b>ELF moved out of range today.</b> <b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, HIMS, AI &amp; ODD have no edge on this side. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-08-13T20:23:09+00:00"
+  "updated_at": "2026-08-13T21:14:20+00:00"
 }
