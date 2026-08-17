@@ -54,11 +54,11 @@
         ]
       },
       "ivNear": 0.66,
-      "ivFar": 0.66,
+      "ivFar": 0.672,
       "near": {
         "expiry": "2026-08-21",
         "dte": 4,
-        "call_cost": 24.0,
+        "call_cost": 23.5,
         "put_cost": 20.0,
         "call_quoted": true,
         "put_quoted": true
@@ -68,9 +68,9 @@
       "sym": "HIMS",
       "co": "Hims & Hers Health",
       "yf": "HIMS",
-      "price": "$28.62",
-      "spot": 28.62,
-      "chg": "−12.8% · 1mo",
+      "price": "$28.61",
+      "spot": 28.61,
+      "chg": "−12.9% · 1mo",
       "dir": "down",
       "levels": [
         [
@@ -116,13 +116,13 @@
         ],
         "since": "2026-08-17"
       },
-      "ivNear": 0.629,
-      "ivFar": 0.659,
+      "ivNear": 0.634,
+      "ivFar": 0.719,
       "near": {
         "expiry": "2026-08-21",
         "dte": 4,
-        "call_cost": 83.5,
-        "put_cost": 89.5,
+        "call_cost": 93.5,
+        "put_cost": 83.0,
         "call_quoted": true,
         "put_quoted": true
       }
@@ -131,9 +131,9 @@
       "sym": "AI",
       "co": "C3.ai",
       "yf": "AI",
-      "price": "$9.69",
-      "spot": 9.69,
-      "chg": "+9.9% · 1mo",
+      "price": "$9.70",
+      "spot": 9.7,
+      "chg": "+10.0% · 1mo",
       "dir": "up",
       "levels": [
         [
@@ -178,13 +178,13 @@
           ]
         ]
       },
-      "ivNear": 0.584,
-      "ivFar": 0.807,
+      "ivNear": 0.668,
+      "ivFar": 0.795,
       "near": {
         "expiry": "2026-08-21",
         "dte": 4,
-        "call_cost": 37.5,
-        "put_cost": 18.0,
+        "call_cost": 35.0,
+        "put_cost": 17.5,
         "call_quoted": true,
         "put_quoted": true
       }
@@ -255,8 +255,8 @@
       "sym": "ELF",
       "co": "e.l.f. Beauty",
       "yf": "ELF",
-      "price": "$93.68",
-      "spot": 93.68,
+      "price": "$93.66",
+      "spot": 93.66,
       "chg": "+27.1% · 1mo",
       "dir": "up",
       "levels": [
@@ -279,7 +279,7 @@
         "why": [
           [
             "The read",
-            "An ATM contract runs about <b>$188</b>, 1.9× the $100 you're working with. The setup doesn't matter if you can't buy it."
+            "An ATM contract runs about <b>$212</b>, 2.1× the $100 you're working with. The setup doesn't matter if you can't buy it."
           ],
           [
             "Watch for",
@@ -294,7 +294,7 @@
         "why": [
           [
             "The read",
-            "An ATM put runs about <b>$226</b>, 2.3× the $100 you're working with. Can't express it at this size."
+            "An ATM put runs about <b>$220</b>, 2.2× the $100 you're working with. Can't express it at this size."
           ],
           [
             "Watch for",
@@ -304,12 +304,12 @@
         "since": "2026-08-13"
       },
       "ivNear": 0.552,
-      "ivFar": 0.525,
+      "ivFar": 0.501,
       "near": {
         "expiry": "2026-08-21",
         "dte": 4,
-        "call_cost": 187.5,
-        "put_cost": 225.79,
+        "call_cost": 212.0,
+        "put_cost": 219.77,
         "call_quoted": true,
         "put_quoted": false
       }
@@ -325,5 +325,5 @@
       "<b>HIMS &amp; ODD changed today.</b> <b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, HIMS &amp; AI have no edge on this side. ODD is worth watching, not buying. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-08-17T20:01:00+00:00"
+  "updated_at": "2026-08-17T20:43:25+00:00"
 }
