@@ -195,7 +195,7 @@
       "yf": "ODD",
       "price": "$12.09",
       "spot": 12.09,
-      "chg": "−25.9% · 1mo",
+      "chg": "−26.0% · 1mo",
       "dir": "down",
       "levels": [
         [
@@ -217,7 +217,7 @@
         "why": [
           [
             "The read",
-            "Sitting at <b>0%</b> of its 20-day range, between $12.09 and $16.99, RSI 26. Nothing in the trend, the range or the momentum lines up into a call setup here."
+            "Sitting at <b>0%</b> of its 20-day range, between $12.09 and $16.99, RSI 29. Nothing in the trend, the range or the momentum lines up into a call setup here."
           ],
           [
             "Watch for",
@@ -231,22 +231,22 @@
         "why": [
           [
             "The read",
-            "Already down at <b>0%</b> of its 20-day range with RSI 26. Puts were the trade getting here. The easy down-money is spent."
+            "Already down at <b>0%</b> of its 20-day range with RSI 29. Puts were the trade getting here. The easy down-money is spent."
           ],
           [
             "Watch for",
-            "A failed bounce into $14.53 is a cleaner short than chasing fresh lows. Shorting down here is late."
+            "A failed bounce into $14.72 is a cleaner short than chasing fresh lows. Shorting down here is late."
           ]
         ],
         "since": "2026-08-17"
       },
-      "ivNear": 0.898,
-      "ivFar": 0.898,
+      "ivNear": 0.89,
+      "ivFar": 0.89,
       "near": {
         "expiry": "2026-08-21",
         "dte": 4,
-        "call_cost": 50.07,
-        "put_cost": 40.54,
+        "call_cost": 49.67,
+        "put_cost": 40.14,
         "call_quoted": false,
         "put_quoted": false
       }
@@ -325,5 +325,5 @@
       "<b>HIMS &amp; ODD changed today.</b> <b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, HIMS &amp; AI have no edge on this side. ODD is worth watching, not buying. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-08-17T20:43:25+00:00"
+  "updated_at": "2026-08-17T21:04:34+00:00"
 }
