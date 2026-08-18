@@ -195,7 +195,7 @@
       "yf": "ODD",
       "price": "$12.30",
       "spot": 12.3,
-      "chg": "−24.7% · 1mo",
+      "chg": "−24.5% · 1mo",
       "dir": "down",
       "levels": [
         [
@@ -213,39 +213,39 @@
       ],
       "call": {
         "verdict": "wait",
-        "vlabel": "Watch",
+        "vlabel": "No base",
         "why": [
           [
             "The read",
-            "Sitting at <b>4%</b> of its 20-day range, between $12.09 and $16.99, RSI 25. Nothing in the trend, the range or the momentum lines up into a call setup here."
+            "Under both averages ($14.34 / $14.39) and sitting at <b>4%</b> of its range, RSI 34. Still falling, no buyer showing up yet."
           ],
           [
             "Watch for",
-            "A clean break of $16.99 on volume would start something. Until then, no setup = no trade."
+            "A real base plus a reclaim of $14.34 on volume. Not yet. Don't catch it."
           ]
         ]
       },
       "put": {
-        "verdict": "wait",
-        "vlabel": "Late",
+        "verdict": "go",
+        "vlabel": "Looks solid",
         "why": [
           [
             "The read",
-            "Already down at <b>4%</b> of its 20-day range with RSI 25. Puts were the trade getting here. The easy down-money is spent."
+            "Under both averages ($14.34 / $14.39) at <b>4%</b> of range, RSI 34. Breaking down with room left toward $12.09."
           ],
           [
             "Watch for",
-            "A failed bounce into $14.44 is a cleaner short than chasing fresh lows. Shorting down here is late."
+            "Void if it reclaims $14.34. That's the stop. Set it before you're in, not after."
           ]
         ],
         "since": "2026-08-18"
       },
-      "ivNear": 0.862,
-      "ivFar": 0.862,
+      "ivNear": 0.904,
+      "ivFar": 0.904,
       "near": {
         "expiry": "2026-08-21",
         "dte": 3,
-        "call_cost": 54.98,
+        "call_cost": 56.74,
         "put_cost": 50.0,
         "call_quoted": false,
         "put_quoted": true
@@ -322,8 +322,8 @@
     ],
     "put": [
       "Puts · Aug 21 expiry",
-      "<b>HIMS &amp; ODD changed today.</b> <b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, HIMS &amp; AI have no edge on this side. ODD is worth watching, not buying. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
+      "<b>ODD set up today.</b> <b>ODD is the clean put.</b> SOUN, HIMS &amp; AI have no edge on this side. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-08-18T20:49:33+00:00"
+  "updated_at": "2026-08-18T21:22:00+00:00"
 }
