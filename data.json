@@ -58,7 +58,7 @@
       "near": {
         "expiry": "2026-08-21",
         "dte": 3,
-        "call_cost": 18.5,
+        "call_cost": 18.0,
         "put_cost": 20.0,
         "call_quoted": true,
         "put_quoted": true
@@ -217,7 +217,7 @@
         "why": [
           [
             "The read",
-            "Sitting at <b>4%</b> of its 20-day range, between $12.09 and $16.99, RSI 26. Nothing in the trend, the range or the momentum lines up into a call setup here."
+            "Sitting at <b>4%</b> of its 20-day range, between $12.09 and $16.99, RSI 25. Nothing in the trend, the range or the momentum lines up into a call setup here."
           ],
           [
             "Watch for",
@@ -231,21 +231,21 @@
         "why": [
           [
             "The read",
-            "Already down at <b>4%</b> of its 20-day range with RSI 26. Puts were the trade getting here. The easy down-money is spent."
+            "Already down at <b>4%</b> of its 20-day range with RSI 25. Puts were the trade getting here. The easy down-money is spent."
           ],
           [
             "Watch for",
-            "A failed bounce into $14.52 is a cleaner short than chasing fresh lows. Shorting down here is late."
+            "A failed bounce into $14.44 is a cleaner short than chasing fresh lows. Shorting down here is late."
           ]
         ],
         "since": "2026-08-18"
       },
-      "ivNear": 0.896,
-      "ivFar": 0.896,
+      "ivNear": 0.862,
+      "ivFar": 0.862,
       "near": {
         "expiry": "2026-08-21",
         "dte": 3,
-        "call_cost": 56.41,
+        "call_cost": 54.98,
         "put_cost": 50.0,
         "call_quoted": false,
         "put_quoted": true
@@ -322,8 +322,8 @@
     ],
     "put": [
       "Puts · Aug 21 expiry",
-      "<b>ODD &amp; HIMS changed today.</b> <b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, HIMS &amp; AI have no edge on this side. ODD is worth watching, not buying. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
+      "<b>HIMS &amp; ODD changed today.</b> <b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, HIMS &amp; AI have no edge on this side. ODD is worth watching, not buying. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-08-18T20:21:04+00:00"
+  "updated_at": "2026-08-18T20:49:33+00:00"
 }
