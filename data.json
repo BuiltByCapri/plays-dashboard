@@ -58,7 +58,7 @@
       "near": {
         "expiry": "2026-08-21",
         "dte": 2,
-        "call_cost": 24.5,
+        "call_cost": 24.0,
         "put_cost": 9.0,
         "call_quoted": true,
         "put_quoted": true
@@ -183,7 +183,7 @@
       "near": {
         "expiry": "2026-08-21",
         "dte": 2,
-        "call_cost": 14.5,
+        "call_cost": 14.0,
         "put_cost": 28.0,
         "call_quoted": true,
         "put_quoted": true
@@ -325,5 +325,5 @@
       "<b>ODD set up today.</b> <b>ODD is the clean put.</b> SOUN, HIMS &amp; AI have no edge on this side. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-08-19T20:24:35+00:00"
+  "updated_at": "2026-08-19T20:53:52+00:00"
 }
