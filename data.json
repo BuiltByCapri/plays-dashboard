@@ -53,7 +53,7 @@
           ]
         ]
       },
-      "ivNear": 0.605,
+      "ivNear": 0.582,
       "ivFar": 0.633,
       "near": {
         "expiry": "2026-08-21",
@@ -195,7 +195,7 @@
       "yf": "ODD",
       "price": "$12.51",
       "spot": 12.51,
-      "chg": "−23.2% · 1mo",
+      "chg": "−22.9% · 1mo",
       "dir": "down",
       "levels": [
         [
@@ -217,36 +217,36 @@
         "why": [
           [
             "The read",
-            "Under both averages ($14.09 / $14.30) and sitting at <b>9%</b> of its range, RSI 37. Still falling, no buyer showing up yet."
+            "Under both averages ($14.18 / $14.46) and sitting at <b>9%</b> of its range, RSI 38. Still falling, no buyer showing up yet."
           ],
           [
             "Watch for",
-            "A real base plus a reclaim of $14.09 on volume. Not yet. Don't catch it."
+            "A real base plus a reclaim of $14.18 on volume. Not yet. Don't catch it."
           ]
         ]
       },
       "put": {
-        "verdict": "wait",
-        "vlabel": "Rich",
+        "verdict": "go",
+        "vlabel": "Looks solid",
         "why": [
           [
             "The read",
-            "Under both averages ($14.09 / $14.30) at <b>9%</b> of range, RSI 37. Breaking down with room left toward $12.09."
+            "Under both averages ($14.18 / $14.46) at <b>9%</b> of range, RSI 38. Breaking down with room left toward $12.09."
           ],
           [
             "Watch for",
-            "One catch: month-out premium's running about 124% against 91% realized, so you'd be paying up for the move. Right idea, rich price, wait for vol to cool or spread it off."
+            "Void if it reclaims $14.18. That's the stop. Set it before you're in, not after."
           ]
         ],
         "since": "2026-08-20"
       },
-      "ivNear": 0.91,
+      "ivNear": 0.939,
       "ivFar": 1.244,
       "near": {
         "expiry": "2026-08-21",
         "dte": 1,
-        "call_cost": 7.24,
-        "put_cost": 56.1,
+        "call_cost": 7.81,
+        "put_cost": 56.67,
         "call_quoted": false,
         "put_quoted": false
       }
@@ -322,8 +322,8 @@
     ],
     "put": [
       "Puts · Aug 21 expiry",
-      "<b>ELF &amp; ODD changed today.</b> <b>Nothing clean at these prices.</b> The put setup's there, the premium isn't. ODD has the setup but the premium's rich, right idea, wrong price. SOUN, HIMS, AI &amp; ELF have no edge on this side. Don't chase knives that already fell."
+      "<b>ODD set up today.</b> <b>ODD is the clean put.</b> SOUN, HIMS, AI &amp; ELF have no edge on this side. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-08-20T20:26:35+00:00"
+  "updated_at": "2026-08-20T20:56:56+00:00"
 }
