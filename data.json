@@ -304,7 +304,7 @@
         "since": "2026-08-21"
       },
       "ivNear": 0.528,
-      "ivFar": 0.532,
+      "ivFar": 0.536,
       "near": {
         "expiry": "2026-08-28",
         "dte": 7,
@@ -325,5 +325,5 @@
       "<b>ODD set up today.</b> <b>HIMS &amp; ELF moved out of range today.</b> <b>ODD is the clean put.</b> SOUN &amp; AI have no edge on this side. HIMS &amp; ELF are priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-08-21T20:27:59+00:00"
+  "updated_at": "2026-08-21T20:51:52+00:00"
 }
