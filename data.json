@@ -60,7 +60,7 @@
         "expiry": "2026-09-18",
         "dte": 2,
         "call_cost": 9.5,
-        "put_cost": 15.0,
+        "put_cost": 15.5,
         "call_quoted": true,
         "put_quoted": true
       }
@@ -327,5 +327,5 @@
       "<b>HIMS is the clean put.</b> AI &amp; ODD have no edge on this side. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-09-16T20:22:05+00:00"
+  "updated_at": "2026-09-16T23:08:27+00:00"
 }
