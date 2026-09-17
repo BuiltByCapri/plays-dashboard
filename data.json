@@ -1,14 +1,14 @@
 {
-  "updated": "2026-09-16",
-  "analysis_date": "2026-09-16",
+  "updated": "2026-09-17",
+  "analysis_date": "2026-09-17",
   "names": [
     {
       "sym": "SOUN",
       "co": "SoundHound AI",
       "yf": "SOUN",
-      "price": "$5.93",
-      "spot": 5.93,
-      "chg": "−15.8% · 1mo",
+      "price": "$6.03",
+      "spot": 6.03,
+      "chg": "−13.8% · 1mo",
       "dir": "down",
       "levels": [
         [
@@ -21,7 +21,7 @@
         ],
         [
           "In range",
-          "0%"
+          "7%"
         ]
       ],
       "call": {
@@ -30,7 +30,7 @@
         "why": [
           [
             "The read",
-            "Sitting at <b>0%</b> of its 20-day range, between $5.93 and $7.32, RSI 23. Nothing in the trend, the range or the momentum lines up into a call setup here."
+            "Sitting at <b>7%</b> of its 20-day range, between $5.93 and $7.32, RSI 19. Nothing in the trend, the range or the momentum lines up into a call setup here."
           ],
           [
             "Watch for",
@@ -45,22 +45,22 @@
         "why": [
           [
             "The read",
-            "Already down at <b>0%</b> of its 20-day range with RSI 23. Puts were the trade getting here. The easy down-money is spent."
+            "Already down at <b>7%</b> of its 20-day range with RSI 19. Puts were the trade getting here. The easy down-money is spent."
           ],
           [
             "Watch for",
-            "A failed bounce into $6.76 is a cleaner short than chasing fresh lows. Shorting down here is late."
+            "A failed bounce into $6.71 is a cleaner short than chasing fresh lows. Shorting down here is late."
           ]
         ],
         "since": "2026-09-15"
       },
-      "ivNear": 0.555,
-      "ivFar": 0.619,
+      "ivNear": 0.59,
+      "ivFar": 0.594,
       "near": {
         "expiry": "2026-09-18",
-        "dte": 2,
-        "call_cost": 9.5,
-        "put_cost": 15.5,
+        "dte": 1,
+        "call_cost": 10.5,
+        "put_cost": 6.5,
         "call_quoted": true,
         "put_quoted": true
       }
@@ -69,10 +69,10 @@
       "sym": "HIMS",
       "co": "Hims & Hers Health",
       "yf": "HIMS",
-      "price": "$28.00",
-      "spot": 28.0,
-      "chg": "−2.1% · 1mo",
-      "dir": "down",
+      "price": "$27.98",
+      "spot": 27.98,
+      "chg": "+2.1% · 1mo",
+      "dir": "up",
       "levels": [
         [
           "Support",
@@ -84,7 +84,7 @@
         ],
         [
           "In range",
-          "9%"
+          "8%"
         ]
       ],
       "call": {
@@ -93,11 +93,11 @@
         "why": [
           [
             "The read",
-            "Under both averages ($29.39 / $30.51) and sitting at <b>9%</b> of its range, RSI 42. Still falling, no buyer showing up yet."
+            "Under both averages ($29.23 / $30.34) and sitting at <b>8%</b> of its range, RSI 31. Still falling, no buyer showing up yet."
           ],
           [
             "Watch for",
-            "A real base plus a reclaim of $29.39 on volume. Not yet. Don't catch it."
+            "A real base plus a reclaim of $29.23 on volume. Not yet. Don't catch it."
           ]
         ],
         "since": "2026-09-14"
@@ -108,22 +108,22 @@
         "why": [
           [
             "The read",
-            "Under both averages ($29.39 / $30.51) at <b>9%</b> of range, RSI 42. Breaking down with room left toward $27.44."
+            "Under both averages ($29.23 / $30.34) at <b>8%</b> of range, RSI 31. Breaking down with room left toward $27.44."
           ],
           [
             "Watch for",
-            "Void if it reclaims $29.39. That's the stop. Set it before you're in, not after."
+            "Void if it reclaims $29.23. That's the stop. Set it before you're in, not after."
           ]
         ],
         "since": "2026-09-14"
       },
-      "ivNear": 0.674,
-      "ivFar": 0.691,
+      "ivNear": 0.649,
+      "ivFar": 0.677,
       "near": {
         "expiry": "2026-09-18",
-        "dte": 2,
-        "call_cost": 68.5,
-        "put_cost": 65.5,
+        "dte": 1,
+        "call_cost": 46.5,
+        "put_cost": 51.5,
         "call_quoted": true,
         "put_quoted": true
       }
@@ -132,9 +132,9 @@
       "sym": "AI",
       "co": "C3.ai",
       "yf": "AI",
-      "price": "$10.56",
-      "spot": 10.56,
-      "chg": "+8.9% · 1mo",
+      "price": "$10.72",
+      "spot": 10.72,
+      "chg": "+8.6% · 1mo",
       "dir": "up",
       "levels": [
         [
@@ -147,7 +147,7 @@
         ],
         [
           "In range",
-          "59%"
+          "69%"
         ]
       ],
       "call": {
@@ -156,11 +156,11 @@
         "why": [
           [
             "The read",
-            "Above the 20-day ($10.45) with the longer trend behind it, <b>59%</b> of range, RSI 60. That's a real setup, not a hope."
+            "Above the 20-day ($10.46) with the longer trend behind it, <b>69%</b> of range, RSI 55. That's a real setup, not a hope."
           ],
           [
             "Watch for",
-            "Wants to hold $10.45. Lose that and the setup's void. That's your line, not a feeling."
+            "Wants to hold $10.46. Lose that and the setup's void. That's your line, not a feeling."
           ]
         ],
         "since": "2026-09-15"
@@ -171,21 +171,21 @@
         "why": [
           [
             "The read",
-            "Above both averages ($10.45 / $9.76) and +8.9% on the month. Shorting strength is how you get run over."
+            "Above both averages ($10.46 / $9.80) and +8.6% on the month. Shorting strength is how you get run over."
           ],
           [
             "Watch for",
-            "It has to lose $10.45 first. No short edge until then."
+            "It has to lose $10.46 first. No short edge until then."
           ]
         ]
       },
-      "ivNear": 0.553,
-      "ivFar": 0.564,
+      "ivNear": 0.563,
+      "ivFar": 0.607,
       "near": {
         "expiry": "2026-09-18",
-        "dte": 2,
-        "call_cost": 23.0,
-        "put_cost": 18.5,
+        "dte": 1,
+        "call_cost": 30.0,
+        "put_cost": 8.0,
         "call_quoted": true,
         "put_quoted": true
       }
@@ -194,9 +194,9 @@
       "sym": "ODD",
       "co": "Oddity Tech · AI beauty",
       "yf": "ODD",
-      "price": "$18.14",
-      "spot": 18.14,
-      "chg": "+50.0% · 1mo",
+      "price": "$19.34",
+      "spot": 19.34,
+      "chg": "+57.2% · 1mo",
       "dir": "up",
       "levels": [
         [
@@ -205,11 +205,11 @@
         ],
         [
           "Resistance",
-          "$18.82"
+          "$19.34"
         ],
         [
           "In range",
-          "89%"
+          "100%"
         ]
       ],
       "call": {
@@ -218,11 +218,11 @@
         "why": [
           [
             "The read",
-            "Sitting at <b>89%</b> of its 20-day range, between $12.51 and $18.82, RSI 66. Nothing in the trend, the range or the momentum lines up into a call setup here."
+            "Pressing the 20-day high at <b>$19.34</b>, about 0.0% away, with the trend up and RSI 68. Coiled, not broken out."
           ],
           [
             "Watch for",
-            "A clean break of $18.82 on volume would start something. Until then, no setup = no trade."
+            "Take the break of $19.34 on volume, not the anticipation of it."
           ]
         ],
         "since": "2026-09-15"
@@ -233,22 +233,22 @@
         "why": [
           [
             "The read",
-            "Sitting at <b>89%</b> of its 20-day range, between $12.51 and $18.82, RSI 66. There's no breakdown underway to sell into, the short conditions aren't lining up."
+            "Above both averages ($15.32 / $15.12) and +57.2% on the month. Shorting strength is how you get run over."
           ],
           [
             "Watch for",
-            "No clean put edge here. A decisive loss of $12.51 would change that, don't chase it before then."
+            "It has to lose $15.32 first. No short edge until then."
           ]
         ],
         "since": "2026-09-11"
       },
-      "ivNear": 0.842,
-      "ivFar": 0.804,
+      "ivNear": 0.66,
+      "ivFar": 0.728,
       "near": {
         "expiry": "2026-09-18",
-        "dte": 2,
-        "call_cost": 64.24,
-        "put_cost": 49.85,
+        "dte": 1,
+        "call_cost": 61.86,
+        "put_cost": 27.65,
         "call_quoted": false,
         "put_quoted": false
       }
@@ -257,14 +257,14 @@
       "sym": "ELF",
       "co": "e.l.f. Beauty",
       "yf": "ELF",
-      "price": "$93.41",
-      "spot": 93.41,
-      "chg": "−0.3% · 1mo",
-      "dir": "down",
+      "price": "$93.28",
+      "spot": 93.28,
+      "chg": "+0.8% · 1mo",
+      "dir": "up",
       "levels": [
         [
           "Support",
-          "$93.41"
+          "$93.28"
         ],
         [
           "Resistance",
@@ -276,19 +276,19 @@
         ]
       ],
       "call": {
-        "verdict": "mute",
-        "vlabel": "Track only",
+        "verdict": "wait",
+        "vlabel": "Watch",
         "why": [
           [
             "The read",
-            "An ATM contract runs about <b>$160</b>, 1.6× the $100 you're working with. The setup doesn't matter if you can't buy it."
+            "Sitting at <b>0%</b> of its 20-day range, between $93.28 and $109.67, RSI 31. Nothing in the trend, the range or the momentum lines up into a call setup here."
           ],
           [
             "Watch for",
-            "Tracking only. Shares or a spread are the way in here, not a straight call."
+            "A clean break of $109.67 on volume would start something. Until then, no setup = no trade."
           ]
         ],
-        "since": "2026-09-11"
+        "since": "2026-09-17"
       },
       "put": {
         "verdict": "mute",
@@ -296,7 +296,7 @@
         "why": [
           [
             "The read",
-            "An ATM put runs about <b>$117</b>, 1.2× the $100 you're working with. Can't express it at this size."
+            "An ATM put runs about <b>$180</b>, 1.8× the $100 you're working with. Can't express it at this size."
           ],
           [
             "Watch for",
@@ -305,27 +305,27 @@
         ],
         "since": "2026-09-04"
       },
-      "ivNear": 0.584,
-      "ivFar": 0.506,
+      "ivNear": 0.45,
+      "ivFar": 0.494,
       "near": {
         "expiry": "2026-09-18",
-        "dte": 2,
-        "call_cost": 160.19,
-        "put_cost": 117.15,
+        "dte": 1,
+        "call_cost": 97.39,
+        "put_cost": 180.0,
         "call_quoted": false,
-        "put_quoted": false
+        "put_quoted": true
       }
     }
   ],
   "reads": {
     "call": [
       "Calls · Sep 18 expiry",
-      "<b>AI is the clean call.</b> ELF is priced past the $100 budget, tracking only. No setup = no trade."
+      "<b>ELF changed today.</b> <b>AI is the clean call.</b> No setup = no trade."
     ],
     "put": [
       "Puts · Sep 18 expiry",
       "<b>HIMS is the clean put.</b> AI &amp; ODD have no edge on this side. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-09-16T23:08:27+00:00"
+  "updated_at": "2026-09-17T17:28:37+00:00"
 }
