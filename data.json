@@ -1,6 +1,6 @@
 {
-  "updated": "2026-10-12",
-  "analysis_date": "2026-10-12",
+  "updated": "2026-10-13",
+  "analysis_date": "2026-10-13",
   "names": [
     {
       "sym": "SOUN",
@@ -54,12 +54,12 @@
         ],
         "since": "2026-10-06"
       },
-      "ivNear": 0.539,
-      "ivFar": 0.695,
+      "ivNear": 0.563,
+      "ivFar": 0.707,
       "near": {
         "expiry": "2026-10-16",
-        "dte": 4,
-        "call_cost": 7.77,
+        "dte": 3,
+        "call_cost": 6.54,
         "put_cost": 12.0,
         "call_quoted": false,
         "put_quoted": true
@@ -117,11 +117,11 @@
         ],
         "since": "2026-10-12"
       },
-      "ivNear": 0.681,
-      "ivFar": 0.869,
+      "ivNear": 0.711,
+      "ivFar": 0.882,
       "near": {
         "expiry": "2026-10-16",
-        "dte": 4,
+        "dte": 3,
         "call_cost": 105.0,
         "put_cost": 85.0,
         "call_quoted": true,
@@ -180,10 +180,10 @@
         ]
       },
       "ivNear": 0.342,
-      "ivFar": 0.526,
+      "ivFar": 0.534,
       "near": {
         "expiry": "2026-10-16",
-        "dte": 4,
+        "dte": 3,
         "call_cost": 35.5,
         "put_cost": 24.0,
         "call_quoted": true,
@@ -246,9 +246,9 @@
       "ivFar": 0.589,
       "near": {
         "expiry": "2026-10-16",
-        "dte": 4,
-        "call_cost": 35.54,
-        "put_cost": 76.58,
+        "dte": 3,
+        "call_cost": 28.66,
+        "put_cost": 69.93,
         "call_quoted": false,
         "put_quoted": false
       }
@@ -296,7 +296,7 @@
         "why": [
           [
             "The read",
-            "An ATM put runs about <b>$261</b>, 2.6× the $100 you're working with. Can't express it at this size."
+            "An ATM put runs about <b>$222</b>, 2.2× the $100 you're working with. Can't express it at this size."
           ],
           [
             "Watch for",
@@ -305,13 +305,13 @@
         ],
         "since": "2026-10-08"
       },
-      "ivNear": 0.529,
+      "ivNear": 0.552,
       "ivFar": 0.286,
       "near": {
         "expiry": "2026-10-16",
-        "dte": 4,
+        "dte": 3,
         "call_cost": 252.5,
-        "put_cost": 260.9,
+        "put_cost": 222.28,
         "call_quoted": true,
         "put_quoted": false
       }
@@ -324,8 +324,8 @@
     ],
     "put": [
       "Puts · Oct 16 expiry",
-      "<b>HIMS changed today.</b> <b>Quiet for shorts.</b> Nothing's a clean put right now. HIMS, AI &amp; ODD have no edge on this side. SOUN is worth watching, not buying. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
+      "<b>Quiet for shorts.</b> Nothing's a clean put right now. HIMS, AI &amp; ODD have no edge on this side. SOUN is worth watching, not buying. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-10-12T21:33:11+00:00"
+  "updated_at": "2026-10-13T02:43:14+00:00"
 }
