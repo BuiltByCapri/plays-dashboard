@@ -1,6 +1,6 @@
 {
-  "updated": "2026-11-18",
-  "analysis_date": "2026-11-18",
+  "updated": "2026-11-19",
+  "analysis_date": "2026-11-19",
   "names": [
     {
       "sym": "SOUN",
@@ -54,13 +54,13 @@
         ],
         "since": "2026-11-09"
       },
-      "ivNear": 0.703,
+      "ivNear": 0.719,
       "ivFar": 0.773,
       "near": {
         "expiry": "2026-11-20",
-        "dte": 2,
+        "dte": 1,
         "call_cost": 8.5,
-        "put_cost": 6.5,
+        "put_cost": 7.5,
         "call_quoted": true,
         "put_quoted": true
       }
@@ -117,13 +117,13 @@
         ],
         "since": "2026-11-16"
       },
-      "ivNear": 0.748,
-      "ivFar": 0.787,
+      "ivNear": 0.756,
+      "ivFar": 0.79,
       "near": {
         "expiry": "2026-11-20",
-        "dte": 2,
-        "call_cost": 54.0,
-        "put_cost": 42.0,
+        "dte": 1,
+        "call_cost": 51.5,
+        "put_cost": 44.0,
         "call_quoted": true,
         "put_quoted": true
       }
@@ -180,15 +180,15 @@
         ],
         "since": "2026-11-17"
       },
-      "ivNear": 0.613,
-      "ivFar": 0.805,
+      "ivNear": 0.629,
+      "ivFar": 0.766,
       "near": {
         "expiry": "2026-11-20",
-        "dte": 2,
-        "call_cost": 18.13,
-        "put_cost": 20.0,
-        "call_quoted": false,
-        "put_quoted": true
+        "dte": 1,
+        "call_cost": 23.0,
+        "put_cost": 14.48,
+        "call_quoted": true,
+        "put_quoted": false
       }
     },
     {
@@ -247,9 +247,9 @@
       "ivFar": 0.999,
       "near": {
         "expiry": "2026-11-20",
-        "dte": 2,
-        "call_cost": 38.47,
-        "put_cost": 50.14,
+        "dte": 1,
+        "call_cost": 25.6,
+        "put_cost": 37.44,
         "call_quoted": false,
         "put_quoted": false
       }
@@ -258,9 +258,9 @@
       "sym": "ELF",
       "co": "e.l.f. Beauty",
       "yf": "ELF",
-      "price": "$113.75",
-      "spot": 113.75,
-      "chg": "−0.9% · 1mo",
+      "price": "$113.77",
+      "spot": 113.77,
+      "chg": "−0.8% · 1mo",
       "dir": "down",
       "levels": [
         [
@@ -282,7 +282,7 @@
         "why": [
           [
             "The read",
-            "An ATM contract runs about <b>$222</b>, 2.2× the $100 you're working with. The setup doesn't matter if you can't buy it."
+            "An ATM contract runs about <b>$212</b>, 2.1× the $100 you're working with. The setup doesn't matter if you can't buy it."
           ],
           [
             "Watch for",
@@ -297,7 +297,7 @@
         "why": [
           [
             "The read",
-            "An ATM put runs about <b>$203</b>, 2.0× the $100 you're working with. Can't express it at this size."
+            "An ATM put runs about <b>$169</b>, 1.7× the $100 you're working with. Can't express it at this size."
           ],
           [
             "Watch for",
@@ -306,13 +306,13 @@
         ],
         "since": "2026-11-06"
       },
-      "ivNear": 0.529,
-      "ivFar": 0.518,
+      "ivNear": 0.531,
+      "ivFar": 0.526,
       "near": {
         "expiry": "2026-11-20",
-        "dte": 2,
-        "call_cost": 221.5,
-        "put_cost": 202.69,
+        "dte": 1,
+        "call_cost": 211.5,
+        "put_cost": 168.77,
         "call_quoted": true,
         "put_quoted": false
       }
@@ -325,8 +325,8 @@
     ],
     "put": [
       "Puts · Nov 20 expiry",
-      "<b>ODD changed today.</b> <b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, HIMS, AI &amp; ODD are worth watching, not buying. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
+      "<b>Quiet for shorts.</b> Nothing's a clean put right now. SOUN, HIMS, AI &amp; ODD are worth watching, not buying. ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-11-18T21:05:30+00:00"
+  "updated_at": "2026-11-19T02:33:28+00:00"
 }
