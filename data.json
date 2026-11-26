@@ -1,6 +1,6 @@
 {
-  "updated": "2026-11-25",
-  "analysis_date": "2026-11-25",
+  "updated": "2026-11-26",
+  "analysis_date": "2026-11-26",
   "names": [
     {
       "sym": "SOUN",
@@ -54,11 +54,11 @@
         ],
         "since": "2026-11-24"
       },
-      "ivNear": 0.797,
-      "ivFar": 0.836,
+      "ivNear": 0.844,
+      "ivFar": 0.852,
       "near": {
         "expiry": "2026-11-27",
-        "dte": 2,
+        "dte": 1,
         "call_cost": 15.0,
         "put_cost": 1.5,
         "call_quoted": true,
@@ -117,11 +117,11 @@
         ],
         "since": "2026-11-24"
       },
-      "ivNear": 0.881,
-      "ivFar": 0.889,
+      "ivNear": 0.93,
+      "ivFar": 0.904,
       "near": {
         "expiry": "2026-11-27",
-        "dte": 2,
+        "dte": 1,
         "call_cost": 41.0,
         "put_cost": 24.5,
         "call_quoted": true,
@@ -180,11 +180,11 @@
         ],
         "since": "2026-11-24"
       },
-      "ivNear": 1.092,
-      "ivFar": 0.811,
+      "ivNear": 1.152,
+      "ivFar": 0.824,
       "near": {
         "expiry": "2026-11-27",
-        "dte": 2,
+        "dte": 1,
         "call_cost": 19.0,
         "put_cost": 18.0,
         "call_quoted": true,
@@ -247,9 +247,9 @@
       "ivFar": 1.049,
       "near": {
         "expiry": "2026-11-27",
-        "dte": 2,
-        "call_cost": 23.28,
-        "put_cost": 69.98,
+        "dte": 1,
+        "call_cost": 12.34,
+        "put_cost": 59.18,
         "call_quoted": false,
         "put_quoted": false
       }
@@ -282,7 +282,7 @@
         "why": [
           [
             "The read",
-            "An ATM contract runs about <b>$151</b>, 1.5× the $100 you're working with. The setup doesn't matter if you can't buy it."
+            "An ATM contract runs about <b>$105</b>, 1.1× the $100 you're working with. The setup doesn't matter if you can't buy it."
           ],
           [
             "Watch for",
@@ -297,7 +297,7 @@
         "why": [
           [
             "The read",
-            "An ATM put runs about <b>$155</b>, 1.6× the $100 you're working with. Can't express it at this size."
+            "An ATM put runs about <b>$111</b>, 1.1× the $100 you're working with. Can't express it at this size."
           ],
           [
             "Watch for",
@@ -310,9 +310,9 @@
       "ivFar": 0.476,
       "near": {
         "expiry": "2026-11-27",
-        "dte": 2,
-        "call_cost": 150.85,
-        "put_cost": 155.46,
+        "dte": 1,
+        "call_cost": 105.42,
+        "put_cost": 111.23,
         "call_quoted": false,
         "put_quoted": false
       }
@@ -328,5 +328,5 @@
       "<b>AI is the clean put.</b> ELF is priced past the $100 budget, tracking only. Don't chase knives that already fell."
     ]
   },
-  "updated_at": "2026-11-25T22:08:20+00:00"
+  "updated_at": "2026-11-26T22:07:01+00:00"
 }
